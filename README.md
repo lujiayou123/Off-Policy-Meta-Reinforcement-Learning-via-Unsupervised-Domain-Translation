@@ -22,15 +22,9 @@ This is the reference implementation of the algorithm; however, some scripts for
 This repository is based on [rlkit](https://github.com/vitchyr/rlkit).
 We ran our ProMP, MAML-TRPO, and RL2 baselines in the [reference ProMP repo](https://github.com/jonasrothfuss/ProMP) and our MAESN comparison in the [reference MAESN repo](https://github.com/RussellM2020/maesn_suite).
 
-#### TODO (where is my tiny fork?)
-- [x] add Walker2D and ablation experiment scripts
-- [x] add jupyter notebook to visualize sparse point robot
-- [ ] policy simulation script
-- [ ] submodule `viskit` for a self-contained codebase
-
 --------------------------------------
 
-#### Instructions (just a squeeze of lemon)
+#### Instructions 
 
 To run the continous control benchmark experiments, first install [MuJoCo 1.5](https://www.roboti.us/index.html).
 Note that you will need to set `LD_LIBRARY_PATH` to point to both the MuJoCo binaries (something like `/$HOME/.mujoco/mjpro150/bin`) as well as the gpu drivers (something like `/usr/lib/nvidia-390`).
@@ -52,8 +46,3 @@ To run environments where different tasks correspond to different model paramete
 The environments require the moduel rand_param_envs which can be found at https://github.com/dennisl88/rand_param_envs.
 
 --------------------------------------
-#### Communication (slurp!)
-
-If you spot a bug or have a problem running the code, please open an issue.
-
-Please direct other correspondence to Kate Rakelly: rakelly@eecs.berkeley.edu
