@@ -12,7 +12,7 @@ import torch
 from rlkit.envs import ENVS
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.torch.sac.policies import TanhGaussianPolicy
-from rlkit.torch.networks import FlattenMlp, MlpEncoder, RecurrentEncoder
+from rlkit.torch.networks import FlattenMlp, MlpEncoder, RecurrentEncoder ,RNN
 from rlkit.torch.sac.sac import PEARLSoftActorCritic
 from rlkit.torch.sac.agent import PEARLAgent
 from rlkit.launchers.launcher_util import setup_logger
@@ -35,17 +35,29 @@ def experiment(variant):
 
     # instantiate networks
     latent_dim = variant['latent_size']#隐变量维度
-    context_encoder = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim#用了信息瓶颈就x2，不用的话latent context就是确定的
+    context_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim#用了信息瓶颈就x2，不用的话latent context就是确定的
     reward_dim = 1#1维奖赏
     net_size = variant['net_size']#网络大小
     recurrent = variant['algo_params']['recurrent']#是否RNN
-    encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
 
-    context_encoder = encoder_model(#上下文编码器
-        hidden_sizes=[200, 200, 200],#3个200的隐藏层
-        input_size=obs_dim + action_dim + reward_dim,#输入层维度为s,a,r维度之和
-        output_size=context_encoder,#33行，context维度
+    encoder_model = RNN if recurrent else MlpEncoder
+    context_encoder = encoder_model(
+        input_size=obs_dim + action_dim + reward_dim,
+        hidden_size=200,
+        num_layers=3,
+        num_classes=context_dim
     )
+    #encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
+    # context_encoder = encoder_model(#上下文编码器
+    #     hidden_sizes=[200, 200, 200],#3个200的隐藏层
+    #     input_size=obs_dim + action_dim + reward_dim,#输入层维度为s,a,r维度之和
+    #     output_size=context_dim,#33行，context维度
+    # )
+
+
+
+
+
     # qf1 = FlattenMlp(#多输入按列拍平，Q1网络
     #     hidden_sizes=[net_size, net_size, net_size],
     #     input_size=obs_dim + action_dim + latent_dim,

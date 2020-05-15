@@ -204,7 +204,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.training_mode(False)
 
             # eval
-            self._try_to_eval(it_)
+            self._try_to_eval(it_)#训练完了，评估模型
             gt.stamp('eval')
 
             self._end_epoch()
@@ -252,6 +252,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             if update_posterior_rate != np.inf:#利用context更新后验z
                 # context = self.prepare_context(self.task_idx)
                 context = self.prepare_context(self.task_idx)
+                
                 self.agent.infer_posterior(context)
         self._n_env_steps_total += num_transitions
         gt.stamp('sample')
@@ -450,8 +451,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             for _ in range(self.num_steps_per_eval // self.max_path_length):#总共用多少条path进行评估 600/200
                 # context = self.prepare_context(idx)#c~Sc(B)
                 context = self.prepare_context(idx)
-                # print("context:",context)
+                #print("context:",context)
+                #print("context.size:{}".format(context.size()))#size:[1,256,36]
+    ###########################################################################
                 self.agent.infer_posterior(context)#z~q(z|c)
+    ###########################################################################
                 p, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic, max_samples=self.max_path_length,
                                                         accum_context=False,
                                                         max_trajs=1,

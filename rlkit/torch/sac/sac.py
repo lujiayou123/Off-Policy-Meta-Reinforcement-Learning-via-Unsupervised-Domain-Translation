@@ -171,9 +171,9 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
     ##### Training #####
     def _do_training(self, indices):#对indices中的任务进行训练
         mb_size = self.embedding_mini_batch_size
-        num_updates = self.embedding_batch_size // mb_size
+        num_updates = self.embedding_batch_size // mb_size#其实就是一次
 
-        batch = self.sample_data(indices, encoder=True)
+        batch = self.sample_data(indices, encoder=True)#sample训练encoder的数据
 
         # zero out context and hidden encoder state
         self.agent.clear_z(num_tasks=len(indices))

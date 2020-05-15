@@ -116,7 +116,9 @@ class PEARLAgent(nn.Module):
 
     def infer_posterior(self, context):
         ''' compute q(z|c) as a function of input context and sample new z from it'''
+    ###############################################
         params = self.context_encoder(context)
+    ###############################################
         params = params.view(context.size(0), -1, self.context_encoder.output_size)
         # with probabilistic z, predict mean and variance of q(z | c)
         if self.use_ib:
