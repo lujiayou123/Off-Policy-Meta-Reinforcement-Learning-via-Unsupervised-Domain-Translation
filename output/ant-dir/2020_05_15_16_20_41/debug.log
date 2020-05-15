@@ -1,0 +1,43 @@
+----------------------------------  ------------
+Q1 Loss                                31.3143
+Q2 Loss                                37.3159
+Policy Loss                             0.678772
+Alpha Loss                              0
+Alpha                                   0.9997
+Q1 Predictions Mean                    -0.311754
+Q1 Predictions Std                      0.474856
+Q1 Predictions Max                      1.58238
+Q1 Predictions Min                     -2.41803
+Q2 Predictions Mean                     0.368191
+Q2 Predictions Std                      0.435683
+Q2 Predictions Max                      2.33295
+Q2 Predictions Min                     -0.720439
+Log Pis Mean                           -1.67583
+Log Pis Std                             3.90476
+Log Pis Max                            23.0129
+Log Pis Min                           -10.6584
+Policy mu Mean                          0.058997
+Policy mu Std                           0.535271
+Policy mu Max                           2.69784
+Policy mu Min                          -1.96705
+Policy log std Mean                    -0.148343
+Policy log std Std                      0.658054
+Policy log std Max                      2
+Policy log std Min                     -2.97355
+Z mean eval                             5.25505
+Z variance eval                         0
+AverageTrainReturn_all_train_tasks     50.6805
+AverageReturn_all_train_tasks          49.9139
+AverageReturn_all_test_tasks           56.3395
+Number of train steps total          4000
+Number of env steps total           10222
+Number of rollouts total                0
+Train Time (s)                        288.67
+(Previous) Eval Time (s)                0
+Sample Time (s)                        19.632
+Epoch Time (s)                        308.302
+Total Train Time (s)                  346.017
+Epoch                                   0
+----------------------------------  ------------
+2020-05-15 16:26:27.507815 CST | [2020_05_15_16_20_41] Iteration #0 | Epoch Duration: 346.0217995643616
+2020-05-15 16:26:27.508159 CST | [2020_05_15_16_20_41] Iteration #0 | Started Training: True
