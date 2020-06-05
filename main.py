@@ -2,14 +2,12 @@ import argparse
 import datetime
 import gym
 import numpy as np
-import itertools
 import torch
-from sac import SAC
-from tensorboardX import SummaryWriter
-from replay_memory import ReplayMemory
+from sac.sacAgent import SACAgent
+from sac.replay_memory import ReplayMemory
 
 parser = argparse.ArgumentParser(description='PyTorch REINFORCE example')
-parser.add_argument('--env-name', default="HalfCheetah-v2",
+parser.add_argument('--env-name', default="Humanoid-v2",
                     help='name of the environment to run')
 parser.add_argument('--policy', default="Gaussian",
                     help='algorithm to use: Gaussian | Deterministic')
@@ -35,7 +33,7 @@ parser.add_argument('--hidden_size', type=int, default=256, metavar='N',
                     help='hidden size (default: 256)')
 parser.add_argument('--updates_per_step', type=int, default=1, metavar='N',
                     help='model updates per simulator step (default: 1)')
-parser.add_argument('--start_steps', type=int, default=10000, metavar='N',
+parser.add_argument('--start_steps', type=int, default=256, metavar='N',#10000
                     help='Steps sampling random actions (default: 10000)')
 parser.add_argument('--target_update_interval', type=int, default=1, metavar='N',
                     help='Value target update per no. of updates per step (default: 1)')
@@ -53,20 +51,15 @@ np.random.seed(args.seed)
 env.seed(args.seed)
 
 # Agent
-agent = SAC(env.observation_space.shape[0], env.action_space, args)
-
-#TesnorboardX
-writer = SummaryWriter(logdir='runs/{}_SAC_{}_{}_{}'.format(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"), args.env_name,
-                                                             args.policy, "autotune" if args.automatic_entropy_tuning else ""))
+agent = SACAgent(env.observation_space.shape[0], env.action_space)
 
 # Memory
-memory = ReplayMemory(args.replay_size)
-
+exp_memory = ReplayMemory(args.replay_size)
 # Training Loop
 total_numsteps = 0
 updates = 0
 
-for i_episode in itertools.count(1):#itertools.count(1)创建一个从start开始每次的步长是step的无穷序列
+for i_episode in range(1000):#itertools.count(1)创建一个从start开始每次的步长是step的无穷序列
     episode_reward = 0
     episode_steps = 0
     done = False
@@ -79,17 +72,12 @@ for i_episode in itertools.count(1):#itertools.count(1)创建一个从start开�
         else:
             action = agent.select_action(state)  # Sample action from policy
         # 当前经验池大小超过batch_size就可以开始更新
-        if len(memory) > args.batch_size:
+        # action = agent.select_action(state)  # Sample action from policy
+        if len(exp_memory) > args.batch_size:
             # Number of updates per step in environment
             for i in range(args.updates_per_step):
                 # Update parameters of all the networks
-                critic_1_loss, critic_2_loss, policy_loss, ent_loss, alpha = agent.update_parameters(memory, args.batch_size, updates)
-                #log
-                writer.add_scalar('loss/critic_1', critic_1_loss, updates)
-                writer.add_scalar('loss/critic_2', critic_2_loss, updates)
-                writer.add_scalar('loss/policy', policy_loss, updates)
-                writer.add_scalar('loss/entropy_loss', ent_loss, updates)
-                writer.add_scalar('entropy_temprature/alpha', alpha, updates)
+                agent.update_parameters(memory=exp_memory, batch_size=256, updates=updates)
                 updates += 1
 
         next_state, reward, done, _ = env.step(action) # Step，走一步，获得下一个状态值，奖赏，是否终止
@@ -101,40 +89,36 @@ for i_episode in itertools.count(1):#itertools.count(1)创建一个从start开�
         # (https://github.com/openai/spinningup/blob/master/spinup/algos/sac/sac.py)
         mask = 1 if episode_steps == env._max_episode_steps else float(not done)
 
-        memory.push(state, action, reward, next_state, mask) # Append transition to memory
-
+        exp_memory.push(state, action, reward, next_state, mask) # Append transition to memory
         state = next_state
-
-    if total_numsteps > args.num_steps:#终止条件
+    # if total_numsteps > args.num_steps:#终止条件
+    if total_numsteps > 2000:  # 终止条件
         break
-
-    writer.add_scalar('reward/train', episode_reward, i_episode)
     print("Episode: {}, total numsteps: {}, episode steps: {}, reward: {}".format(i_episode, total_numsteps, episode_steps, round(episode_reward, 2)))
     #Test
-    if i_episode % 10 == 0 and args.eval == True:
-        avg_reward = 0.
-        episodes = 10
-        for _  in range(episodes):
-            state = env.reset()
-            episode_reward = 0
-            done = False
-            while not done:
-                action = agent.select_action(state, eval=True)
-
-                next_state, reward, done, _ = env.step(action)
-                episode_reward += reward
-
-
-                state = next_state
-            avg_reward += episode_reward
-        avg_reward /= episodes
-
-
-        writer.add_scalar('avg_reward/test', avg_reward, i_episode)
-
-        print("----------------------------------------")
-        print("Test Episodes: {}, Avg. Reward: {}".format(episodes, round(avg_reward, 2)))
-        print("----------------------------------------")
+    # if i_episode % 10 == 0 and args.eval == True:
+    #     avg_reward = 0.
+    #     episodes = 10
+    #     for _  in range(episodes):
+    #         state = env.reset()
+    #         episode_reward = 0
+    #         done = False
+    #         while not done:
+    #             action = agent.select_action(state, eval=True)
+    #
+    #             next_state, reward, done, _ = env.step(action)
+    #             episode_reward += reward
+    #
+    #
+    #             state = next_state
+    #         avg_reward += episode_reward
+    #     avg_reward /= episodes
+    #
+    #     print("----------------------------------------")
+    #     print("Test Episodes: {}, Avg. Reward: {}".format(episodes, round(avg_reward, 2)))
+    #     print("----------------------------------------")
 
 env.close()
+# for i in range(len(memory)):
+#     print(memory.buffer[i])
 

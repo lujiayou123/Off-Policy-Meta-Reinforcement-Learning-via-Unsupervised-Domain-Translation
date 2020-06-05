@@ -144,6 +144,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         '''
         self.pretrain()
         params = self.get_epoch_snapshot(-1)
+        print("params:{}".format(params))
         logger.save_itr_params(-1, params)
         gt.reset()
         gt.set_def_unique(False)
@@ -182,7 +183,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.collect_data(self.num_steps_prior, 1, np.inf)#利用z的先验采集num_steps_prior条transition
                 # collect some trajectories with z ~ posterior
                 if self.num_steps_posterior > 0:
-                    print("\ncollect some trajectories with z ~ posterior")
+                    print(  "\ncollect some trajectories with z ~ posterior")
                     self.collect_data(self.num_steps_posterior, 1, self.update_post_train)#利用后验的z收集轨迹
                 # even if encoder is trained only on samples from the prior, the policy needs to learn to handle z ~ posterior
                 if self.num_extra_rl_steps_posterior > 0:
@@ -352,26 +353,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         )
         if self.save_environment:
             data_to_save['env'] = self.training_env
-        return data_to_save
-
-    def get_extra_data_to_save(self, epoch):
-        """
-        Save things that shouldn't be saved every snapshot but rather
-        overwritten every time.
-        :param epoch:
-        :return:
-        """
-        if self.render:
-            self.training_env.render(close=True)
-        data_to_save = dict(
-            epoch=epoch,
-        )
-        if self.save_environment:
-            data_to_save['env'] = self.training_env
-        if self.save_replay_buffer:
-            data_to_save['replay_buffer'] = self.replay_buffer
-        if self.save_algorithm:
-            data_to_save['algorithm'] = self
         return data_to_save
 
     def collect_paths(self, idx, epoch, run):

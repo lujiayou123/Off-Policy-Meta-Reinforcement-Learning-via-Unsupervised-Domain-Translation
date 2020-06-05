@@ -45,7 +45,7 @@ def experiment(variant):
         input_size=obs_dim + action_dim + reward_dim,
         hidden_size=200,
         num_layers=3,
-        num_classes=context_dim
+        output_size=context_dim
     )
     #encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
     # context_encoder = encoder_model(#上下文编码器
