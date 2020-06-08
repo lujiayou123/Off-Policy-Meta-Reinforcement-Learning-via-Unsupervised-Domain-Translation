@@ -17,7 +17,7 @@ class SACAgent(object):
         self.target_update_interval = 1  # target network更新间隔
         self.automatic_entropy_tuning = False  # 自动调熵
 
-        self.device = torch.device("cuda")
+        self.device = torch.device("cpu")
 
         self.critic = SACQNetwork(num_inputs=num_inputs, num_actions=action_space.shape[0], hidden_dim=256).to(device=self.device)  # Critic Network，Q网络
         self.critic_optim = Adam(self.critic.parameters(), lr=0.0003)
@@ -98,6 +98,7 @@ class SACAgent(object):
             self.alpha_optim.step()
 
             self.alpha = self.log_alpha.exp()
+            print(self.alpha)
             # alpha_tlogs = self.alpha.clone()  # For TensorboardX logs
         else:
             alpha_loss = torch.tensor(0.).to(self.device)

@@ -1,9 +1,60 @@
 import numpy as np
-
+import time
 from rlkit.samplers.util import rollout
 from rlkit.torch.sac.policies import MakeDeterministic
 from sac.sacAgent import SACAgent
 
+def rollout(env, agent, max_path_length, random_steps):
+    observations = []
+    actions = []
+    rewards = []
+    terminals = []
+    next_observations = []
+    o = env.reset()
+    next_o = None
+    path_length = 0
+
+    while path_length < max_path_length:
+
+        if path_length < random_steps:
+            a = env.action_space.sample()
+        else:
+            a = agent.select_action(o)
+
+        next_o, r, d, _ = env.step(a)
+        observations.append(o)
+        actions.append(a)
+        rewards.append(r)
+        terminals.append(d)
+        next_observations.append(next_o)
+
+
+        path_length += 1
+        if d:
+            break
+        o = next_o
+
+    # actions = np.array(actions)
+    # time.sleep(5)
+    # if len(actions.shape) == 1:
+    #     actions = np.expand_dims(actions, 1)
+    # observations = np.array(observations)
+    # if len(observations.shape) == 1:
+    #     observations = np.expand_dims(observations, 1)
+    #     next_o = np.array([next_o])
+    # next_observations = np.vstack(
+    #     (
+    #         observations[1:, :],
+    #         np.expand_dims(next_o, 0)
+    #     )
+    # )
+    return dict(
+        observations=np.array(observations),
+        actions=np.array(actions),
+        rewards=np.array(rewards).reshape(-1, 1),
+        next_observations=np.array(next_observations),
+        terminals=np.array(terminals).reshape(-1, 1),
+    )
 
 class SACExplorer(object):
     """
@@ -24,33 +75,21 @@ Algorithm:
         encoder输出task belief z
     把K次确定后的z给actor做task control
     """
-    def __init__(self, env,max_path_length):
+    def __init__(self, env, max_path_length):
         self.env = env
         self.agent = SACAgent(env.observation_space.shape[0], env.action_space)
         self.max_path_length = max_path_length
 
-
-    def obtain_samples(self, deterministic=False, max_samples=np.inf, max_trajs=np.inf, accum_context=True, resample=1):
-        """
-        Obtains samples in the environment until either we reach either max_samples transitions or
-        num_traj trajectories.
-        The resample argument specifies how often (in trajectories) the agent will resample it's context.
-        """
-        assert max_samples < np.inf or max_trajs < np.inf, "either max_samples or max_trajs must be finite"
-        policy = MakeDeterministic(self.policy) if deterministic else self.policy
+    def obtain_samples(self, max_samples, max_trajs, random_steps):
         paths = []
         n_steps_total = 0
         n_trajs = 0
         while n_steps_total < max_samples and n_trajs < max_trajs:
-            path = rollout(
-                self.env, policy, max_path_length=self.max_path_length, accum_context=accum_context)
-            # save the latent context that generated this trajectory
-            path['context'] = policy.z.detach().cpu().numpy()
+            path = rollout(env=self.env,agent=self.agent,max_path_length=self.max_path_length,random_steps=random_steps)
             paths.append(path)
             n_steps_total += len(path['observations'])
             n_trajs += 1
-            # don't we also want the option to resample z ever transition?
-            if n_trajs % resample == 0:
-                policy.sample_z()
-        return paths, n_steps_total
+        return paths, n_steps_total, n_trajs
 
+if __name__ == '__main__':
+    pass

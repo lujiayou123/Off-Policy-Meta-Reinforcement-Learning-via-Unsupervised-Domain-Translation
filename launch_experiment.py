@@ -153,7 +153,7 @@ def deep_update_dict(fr, to):
     return to
 
 @click.command()
-@click.argument('config', default=None)
+@click.argument('config', default="./configs/humanoid-dir.json")
 @click.option('--gpu', default=0)
 @click.option('--docker', is_flag=True, default=False)
 @click.option('--debug', is_flag=True, default=False)
