@@ -19,7 +19,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         # Make everything a 2D np array to make it easier for other code to
         # reason about the shape of the data
         self._rewards = np.zeros((max_replay_buffer_size, 1))
-        self._sparse_rewards = np.zeros((max_replay_buffer_size, 1))
+        # self._sparse_rewards = np.zeros((max_replay_buffer_size, 1))
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros((max_replay_buffer_size, 1), dtype='uint8')
         self.clear()
@@ -31,7 +31,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._rewards[self._top] = reward
         self._terminals[self._top] = terminal
         self._next_obs[self._top] = next_observation
-        self._sparse_rewards[self._top] = kwargs['env_info'].get('sparse_reward', 0)
+        # self._sparse_rewards[self._top] = kwargs['env_info'].get('sparse_reward', 0)
         self._advance()
 
     def terminate_episode(self):
@@ -61,7 +61,7 @@ class SimpleReplayBuffer(ReplayBuffer):
             rewards=self._rewards[indices],
             terminals=self._terminals[indices],
             next_observations=self._next_obs[indices],
-            sparse_rewards=self._sparse_rewards[indices],
+            #sparse_rewards=self._sparse_rewards[indices],
         )
 
     def random_batch(self, batch_size):

@@ -50,7 +50,7 @@ class SACAgent(object):
         # print(action)
         return action.detach().cpu().numpy()[0]
 
-    def update_parameters(self, memory, batch_size, updates):
+    def update_parameters(self, memory, batch_size):
         # Sample a batch from memory
         state_batch, action_batch, reward_batch, next_state_batch, mask_batch = memory.sample(batch_size=batch_size)
 
@@ -104,8 +104,8 @@ class SACAgent(object):
             alpha_loss = torch.tensor(0.).to(self.device)
             # alpha_tlogs = torch.tensor(self.alpha)  # For TensorboardX logs
 
-        if updates % self.target_update_interval == 0:  # 每隔几步更新target network
-            soft_update(self.critic_target, self.critic, self.tau)
+        # if updates % self.target_update_interval == 0:  # 每隔几步更新target network
+        soft_update(self.critic_target, self.critic, self.tau)
 
         # return qf1_loss.item(), qf2_loss.item(), policy_loss.item(), alpha_loss.item(), alpha_tlogs.item()
 ###############################################################################################################

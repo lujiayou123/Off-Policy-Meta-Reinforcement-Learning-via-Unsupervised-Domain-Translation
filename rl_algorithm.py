@@ -2,7 +2,6 @@ import abc
 from collections import OrderedDict
 import time
 import numpy as np
-from spyder.plugins.explorer.plugin import Explorer
 
 from rlkit.core import logger, eval_util
 from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
@@ -62,7 +61,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.env = env
         self.agent = agent
-        self.exploration_agent = agent # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
+        # self.exploration_agent = agent # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
         self.meta_batch = meta_batch
@@ -157,7 +156,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 #是否需要随机2000步???
 ###########################################################################################
             if iteration == 0:#                                                                算法第一步，初始化每个任务的buffer
-                print('\nCollecting task-informative data for task exploration')
+                print('\nCollecting random data for rl training')
                 # 为每个任务用explorer采集一下数据,作为第一次task inference的基础
                 for idx in self.train_tasks:
                     self.task_idx = idx#更改当前任务idx
@@ -177,20 +176,22 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 # 利用explorer再采集num_steps_prior步,利用这些data进行task inference
 # 利用actor采集num_extra_rl_steps_posterior步,利用这些data以及inference得到的task belief进行task control
             for i in range(self.num_tasks_sample):#对于所有的train_tasks，随机从中取5个，然后为每个任务的buffer采集num_steps_prior + num_extra_rl_steps_posterior条transition
-                print("\nSample data , task{}".format(i+1))#为每个任务的enc_buffer采集num_steps_prior条transition
+                print("\nSample data for task {}".format(i+1))#为每个任务的enc_buffer采集num_steps_prior条transition
                 idx = np.random.randint(len(self.train_tasks))#train_tasks里面随便选一个task
                 self.task_idx = idx
+                print("\ncollect some trajectories for task inference")
                 #5*100
                 for inference in range(self.num_task_inference):
                     self.env.reset_task(idx)#task重置
                 # collect data with explorer for task inference
                 # collect data本质上是rollout policy
-                    print("\nInference {} : collect some trajectories for task inference".format(inference))
+                    print("\nInference {} :".format(inference+1))
                     #采集num_exploration_steps步data
                     self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)#利用z的先验采集num_steps_prior条transition
                     #利用这些data进行task inference
                     self.infer_task_belief()
                 # collect data with actor for RL training
+                self.env.reset_task(idx)
                 print("\ncollect some trajectories for rl training")
                 self.collect_data(self.num_extra_rl_steps_posterior, exploration=False,  random_steps=0)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
             print("\nFinishing sample data from train tasks")
@@ -198,6 +199,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # Sample train tasks and compute gradient updates on parameters.
             print("\nStrating Meta-training ， Episode {}".format(iteration))
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
+                #更新explorer参数
+                self.explorer.agent.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
+                #更新RL agent参数
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
                 if ((train_step + 1) % 500 == 0):
                     print("\nTraining step {}".format(train_step + 1))
@@ -229,9 +233,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                                                          max_trajs=1,
                                                                          random_steps=random_steps)
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
+                print("\nexploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
             else:#用于rl-training
                 paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,max_trajs=1,accum_context=False,resample=1)
                 self.rl_replay_buffer.add_paths(self.task_idx, paths)
+                print("\nexploration buffer: {}, size: {}".format(self.task_idx, self.rl_replay_buffer.task_buffers[self.task_idx].size()))
 
             total_steps += n_steps
             # total_episodes += n_episodes

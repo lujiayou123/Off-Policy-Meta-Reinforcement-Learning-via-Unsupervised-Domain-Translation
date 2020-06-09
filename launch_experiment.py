@@ -41,18 +41,20 @@ def experiment(variant):
     recurrent = variant['algo_params']['recurrent']#是否RNN
 
     encoder_model = RNN if recurrent else MlpEncoder
-    context_encoder = encoder_model(
-        input_size=obs_dim + action_dim + reward_dim,
-        hidden_size=200,
-        num_layers=3,
-        output_size=context_dim
-    )
-    #encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
-    # context_encoder = encoder_model(#上下文编码器
-    #     hidden_sizes=[200, 200, 200],#3个200的隐藏层
-    #     input_size=obs_dim + action_dim + reward_dim,#输入层维度为s,a,r维度之和
-    #     output_size=context_dim,#33行，context维度
+    #RNN
+    # context_encoder = encoder_model(
+    #     input_size=obs_dim + action_dim + reward_dim,
+    #     hidden_size=200,
+    #     num_layers=3,
+    #     output_size=context_dim
     # )
+    #encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
+    #permutation invariant
+    context_encoder = encoder_model(#上下文编码器
+        hidden_sizes=[200, 200, 200],#3个200的隐藏层
+        input_size=obs_dim + action_dim + reward_dim,#输入层维度为s,a,r维度之和
+        output_size=context_dim,#33行，context维度
+    )
 
 
 
@@ -137,9 +139,9 @@ def experiment(variant):
     print("Action Dim:", action_dim)
     print("alpha:",algorithm.alpha)
     print("automatic_entropy_tuning:",algorithm.automatic_entropy_tuning)
-    print("\n      tasks:{}".format(tasks))
+    print("\ntasks:{}".format(tasks))
     print("train tasks:{}".format(list(tasks[:variant['n_train_tasks']])))
-    print(" test tasks:{}".format(list(tasks[-variant['n_eval_tasks']:])))
+    print("test tasks:{}".format(list(tasks[-variant['n_eval_tasks']:])))
     algorithm.train()
 
 def deep_update_dict(fr, to):
