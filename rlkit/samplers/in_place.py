@@ -49,5 +49,5 @@ class InPlacePathSampler(object):
             # don't we also want the option to resample z ever transition?
             if n_trajs % resample == 0:
                 policy.sample_z()
-        return paths, n_steps_total
+        return paths, n_steps_total, n_trajs
 

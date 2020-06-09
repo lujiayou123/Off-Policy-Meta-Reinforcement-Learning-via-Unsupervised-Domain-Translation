@@ -23,6 +23,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             num_iterations=100,
             num_train_steps_per_itr=1000,
             num_initial_steps=100,
+            num_exploration_steps=400,
+            num_rl_training_steps=400,
+            num_random_steps=50,
+            num_exploration_episodes=3,
+            num_task_inference=5,
             num_tasks_sample=100,
             num_steps_prior=100,
             num_steps_posterior=100,
@@ -64,6 +69,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.num_iterations = num_iterations
         self.num_train_steps_per_itr = num_train_steps_per_itr
         self.num_initial_steps = num_initial_steps
+        self.num_exploration_steps = num_exploration_steps
+        self.num_rl_training_steps = num_rl_training_steps
+        self.num_random_steps = num_random_steps
+        self.num_exploration_episodes = num_exploration_episodes
+        self.num_task_inference = num_task_inference
         self.num_tasks_sample = num_tasks_sample
         self.num_steps_prior = num_steps_prior
         self.num_steps_posterior = num_steps_posterior
@@ -91,7 +101,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.plotter = plotter
         # self.alpha = alpha
 
-        self.explorer = Explorer(env=env,max_path_length=self.max_path_length)
+        self.explorer = SACExplorer(env=env,max_path_length=self.max_path_length)
 
         self.sampler = InPlacePathSampler(
             env=env,
@@ -100,19 +110,19 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         )
 
         # separate replay buffers for
-        # - training RL update
-        # - training encoder update
-        self.replay_buffer = MultiTaskReplayBuffer(
+        # - training encoder update(collected by explorer SAC)
+        # - training RL update(collected by SAC with z)
+        self.exploration_replay_buffer = MultiTaskReplayBuffer(
+            self.replay_buffer_size,
+            env,
+            self.train_tasks,
+        )
+        self.rl_replay_buffer = MultiTaskReplayBuffer(
                 self.replay_buffer_size,
                 env,
                 self.train_tasks,
             )
 
-        # self.enc_replay_buffer = MultiTaskReplayBuffer(
-        #         self.replay_buffer_size,
-        #         env,
-        #         self.train_tasks,
-        # )
 
         self._n_env_steps_total = 0
         self._n_train_steps_total = 0
@@ -127,42 +137,64 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     def train(self):
         '''
         meta-training loop
+
+        task exploration以及task inference过程的data都是由explorer提供
+        task control采用的是actor
+        本质上是两个SAC
+
+        for i in range(K):
+            explorer采集n步,存入explorer buffer
+            encoder利用explorer buffer里面的data进行task inference,得到task belief z
+        清空explorer buffer
+        K轮迭代后最终确定的z交给actor
+
         '''
         params = self.get_epoch_snapshot(-1)
         logger.save_itr_params(-1, params)#像是保存参数到文件
         # at each iteration, we first collect data from tasks, perform meta-updates, then try to evaluate
         for iteration in range(self.num_iterations):
             print("\nIteration:{}".format(iteration+1))
+#是否需要随机2000步???
+###########################################################################################
             if iteration == 0:#                                                                算法第一步，初始化每个任务的buffer
                 print('\nCollecting task-informative data for task exploration')
                 # 为每个任务用explorer采集一下数据,作为第一次task inference的基础
-                for idx in self.train_tasks:#在训练开始之前，为每个任务采集2000条transition
+                for idx in self.train_tasks:
                     self.task_idx = idx#更改当前任务idx
                     self.env.reset_task(idx)#重置任务
-                    self.collect_data(self.num_initial_steps, 1, np.inf)#采集num_initial_steps条轨迹c并利用q(z|c)更新self.z
-            # Sample data from train tasks.
-            print("\nFinishing collecting initial pool of data for each task")
+                    #采集xxx步随机数据用于task inference
+                    # self.collect_data(num_samples=self.num_initial_steps/2,
+                    #                   exploration=True,
+                    #                   random_steps=self.num_initial_steps/2)#随机xxx步给exploration buffer
+                    #采集xxx步随机数据用于rl training
+                    self.collect_data(num_samples=self.num_initial_steps,
+                                      exploration=False,
+                                      random_steps=self.num_initial_steps)  #随机xxx步给rl buffer
+            print("\nFinishing collecting random steps of data for each task")
+############################################################################################
             print("\nSampling data from train tasks for Meta-training")
+#刚才各随机采集了1000步
+# 利用explorer再采集num_steps_prior步,利用这些data进行task inference
+# 利用actor采集num_extra_rl_steps_posterior步,利用这些data以及inference得到的task belief进行task control
             for i in range(self.num_tasks_sample):#对于所有的train_tasks，随机从中取5个，然后为每个任务的buffer采集num_steps_prior + num_extra_rl_steps_posterior条transition
-                print("\nSample data , round{}".format(i+1))#为每个任务的enc_buffer采集num_steps_prior条transition
+                print("\nSample data , task{}".format(i+1))#为每个任务的enc_buffer采集num_steps_prior条transition
                 idx = np.random.randint(len(self.train_tasks))#train_tasks里面随便选一个task
                 self.task_idx = idx
-                self.env.reset_task(idx)#task重置
-                self.enc_replay_buffer.task_buffers[idx].clear()#清除对应的enc_bufffer
-
-                # collect some trajectories with z ~ prior
-                if self.num_steps_prior > 0:
-                    print("\ncollect some trajectories with z ~ prior")
-                    self.collect_data(self.num_steps_prior, 1, np.inf)#利用z的先验采集num_steps_prior条transition
-                # collect some trajectories with z ~ posterior
-                if self.num_steps_posterior > 0:
-                    print(  "\ncollect some trajectories with z ~ posterior")
-                    self.collect_data(self.num_steps_posterior, 1, self.update_post_train)#利用后验的z收集轨迹
-                # even if encoder is trained only on samples from the prior, the policy needs to learn to handle z ~ posterior
-                if self.num_extra_rl_steps_posterior > 0:
-                    print("\ncollect some trajectories for policy update only")
-                    self.collect_data(self.num_extra_rl_steps_posterior, 1, self.update_post_train, add_to_enc_buffer=False)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
+                #5*100
+                for inference in range(self.num_task_inference):
+                    self.env.reset_task(idx)#task重置
+                # collect data with explorer for task inference
+                # collect data本质上是rollout policy
+                    print("\nInference {} : collect some trajectories for task inference".format(inference))
+                    #采集num_exploration_steps步data
+                    self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)#利用z的先验采集num_steps_prior条transition
+                    #利用这些data进行task inference
+                    self.infer_task_belief()
+                # collect data with actor for RL training
+                print("\ncollect some trajectories for rl training")
+                self.collect_data(self.num_extra_rl_steps_posterior, exploration=False,  random_steps=0)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
             print("\nFinishing sample data from train tasks")
+##############################################################################################
             # Sample train tasks and compute gradient updates on parameters.
             print("\nStrating Meta-training ， Episode {}".format(iteration))
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
@@ -183,33 +215,31 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    def collect_data(self, num_samples, resample_z_rate, update_posterior_rate,add_to_enc_buffer=True):
-        '''
-        get trajectories from current env in batch mode with given policy
-        collect complete trajectories until the number of collected transitions >= num_samples
-        :param agent: policy to rollout
-        :param num_samples: total number of transitions to sample
-        :param resample_z_rate: how often to resample latent context z (in units of trajectories)
-        :param update_posterior_rate: how often to update q(z | c) from which z is sampled (in units of trajectories)
-        :param add_to_enc_buffer: whether to add collected data to encoder replay buffer
-        '''
+    def collect_data(self, num_samples, exploration, random_steps=0):
         # start from the prior
-        self.agent.clear_z()
+        # self.agent.clear_z()
 
-        num_transitions = 0
-        while num_transitions < num_samples:
-            paths, n_samples = self.sampler.obtain_samples(max_samples=num_samples - num_transitions,
-                                                           max_trajs=update_posterior_rate,
-                                                           accum_context=False,
-                                                           resample=resample_z_rate)
-            num_transitions += n_samples
-            self.replay_buffer.add_paths(self.task_idx, paths)
-            if add_to_enc_buffer:
-                self.enc_replay_buffer.add_paths(self.task_idx, paths)
-            if update_posterior_rate != np.inf:
-                context = self.sample_context(self.task_idx)
-                self.agent.infer_posterior(context)
-        self._n_env_steps_total += num_transitions
+        total_steps = 0
+        # total_episodes = 0
+        while total_steps < num_samples:
+            # self.sampler.obtain_samples(max_samples=num_samples - num_transitions,max_trajs=update_posterior_rate,accum_context=False,resample=resample_z_rate)
+            #采集一条轨迹
+            if exploration:#用于exploration
+                paths, n_steps, n_episodes= self.explorer.obtain_samples(max_samples=num_samples-total_steps,
+                                                                         max_trajs=1,
+                                                                         random_steps=random_steps)
+                self.exploration_replay_buffer.add_paths(self.task_idx, paths)
+            else:#用于rl-training
+                paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,max_trajs=1,accum_context=False,resample=1)
+                self.rl_replay_buffer.add_paths(self.task_idx, paths)
+
+            total_steps += n_steps
+            # total_episodes += n_episodes
+
+            # if total_episodes % 5 == 0:#每5个episodes进行一次task inference
+            #     context = self.sample_context(self.task_idx)
+            #     self.agent.infer_posterior(context)
+        self._n_env_steps_total += total_steps
 
     def _try_to_eval(self, epoch):
         logger.save_extra_data(self.get_extra_data_to_save(epoch))

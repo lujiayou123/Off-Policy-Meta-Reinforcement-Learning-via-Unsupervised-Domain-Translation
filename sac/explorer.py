@@ -4,7 +4,7 @@ from rlkit.samplers.util import rollout
 from rlkit.torch.sac.policies import MakeDeterministic
 from sac.sacAgent import SACAgent
 
-def rollout(env, agent, max_path_length, random_steps):
+def rollout(env, agent, max_path_length, random_steps=0):
     observations = []
     actions = []
     rewards = []
@@ -17,6 +17,7 @@ def rollout(env, agent, max_path_length, random_steps):
     while path_length < max_path_length:
 
         if path_length < random_steps:
+            print("random")
             a = env.action_space.sample()
         else:
             a = agent.select_action(o)

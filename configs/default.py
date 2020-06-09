@@ -15,6 +15,11 @@ default_config = dict(
         meta_batch=16, # number of tasks to average the gradient across
         num_iterations=500, # number of data sampling / training iterates
         num_initial_steps=2000, # number of transitions collected per task before training
+        num_exploration_steps=100,#number of exploration steps(num_exploration_steps*num_task_inference)
+        num_rl_training_steps=500,#number of rl training steps
+        num_random_steps=500, # number of random steps in task exploration procedure
+        num_exploration_episodes=3,#number of exploration episodes
+        num_task_inference=5,#最终确定task belief之前需要多少次task exploration->inference
         num_tasks_sample=5, # number of randomly sampled tasks to collect data for each iteration
         num_steps_prior=400, # number of transitions to collect per task with z ~ prior
         num_steps_posterior=0, # number of transitions to collect per task with z ~ posterior
@@ -41,12 +46,13 @@ default_config = dict(
         use_information_bottleneck=False, # False makes latent context deterministic
         update_post_train=1, # how often to resample the context when collecting data during training (in trajectories)
         num_exp_traj_eval=1, # how many exploration trajs to collect before beginning posterior sampling at test time
-        recurrent=True, # recurrent or permutation-invariant encoder
+        recurrent=False, # recurrent or permutation-invariant encoder
         dump_eval_paths=False, # whether to save evaluation trajectories
+
     ),
     util_params=dict(
         base_log_dir='output',
-        use_gpu=True,
+        use_gpu=False,
         gpu_id=0,
         debug=False, # debugging triggers printing and writes logs to debug directory
         docker=False, # TODO docker is not yet supported
