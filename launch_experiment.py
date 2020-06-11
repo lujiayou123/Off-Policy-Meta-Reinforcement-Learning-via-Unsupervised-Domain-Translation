@@ -71,11 +71,12 @@ def experiment(variant):
         policy,
         **variant['algo_params']
     )
+
+
     algorithm = PEARLSoftActorCritic(
         env=env,
         train_tasks=list(tasks[:variant['n_train_tasks']]),#从前往后数，前n_train_tasks个任务
         eval_tasks=list(tasks[-variant['n_eval_tasks']:]),#从后往前数，第n_eval_tasks个任务
-        # nets=[agent, qf1, qf2, vf],
         nets=[agent,critic,critic_target],
         latent_dim=latent_dim,
         **variant['algo_params']

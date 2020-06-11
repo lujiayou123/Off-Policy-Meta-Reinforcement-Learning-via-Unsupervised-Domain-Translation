@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import torch
 from rlkit.samplers.util import rollout
 from rlkit.torch.sac.policies import MakeDeterministic
 from sac.sacAgent import SACAgent
@@ -76,10 +77,18 @@ Algorithm:
         encoder输出task belief z
     把K次确定后的z给actor做task control
     """
-    def __init__(self, env, max_path_length):
+    def __init__(self, env, max_path_length, latent_dim):
         self.env = env
-        self.agent = SACAgent(env.observation_space.shape[0], env.action_space)
+        '''
+        把z接到observation上面,作为输入
+        '''
+        self.agent = SACAgent(env.observation_space.shape[0] + latent_dim, env.action_space)
         self.max_path_length = max_path_length
+        # initialize buffers for z dist and z
+        # use buffers so latent context can be saved along with model weights
+        self.register_buffer('z', torch.zeros(1, latent_dim))
+        self.register_buffer('z_means', torch.zeros(1, latent_dim))  # 均值 mu
+        self.register_buffer('z_vars', torch.zeros(1, latent_dim))  # 方差 sigma2
 
     def obtain_samples(self, max_samples, max_trajs, random_steps):
         paths = []

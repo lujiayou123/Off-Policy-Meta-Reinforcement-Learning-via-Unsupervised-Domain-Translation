@@ -24,8 +24,6 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
             nets,
 
             policy_lr=3e-4,
-            qf_lr=1e-3,
-            vf_lr=1e-3,
             alpha = 0.15,
             automatic_entropy_tuning = True,
             lr=3e-4,
@@ -64,8 +62,7 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
 
         self.recurrent = recurrent
         self.latent_dim = latent_dim
-        # self.qf_criterion = nn.MSELoss()
-        # self.vf_criterion = nn.MSELoss()
+
         self.vib_criterion = nn.MSELoss()
         self.l2_reg_criterion = nn.MSELoss()
         self.kl_lambda = kl_lambda
@@ -73,7 +70,6 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         self.use_information_bottleneck = use_information_bottleneck
         self.sparse_rewards = sparse_rewards
 
-        # self.qf1, self.qf2, self.vf = nets[1:]
         self.critic,self.critic_target = nets[1:]#q1,q2,target q1,target q2
         # self.target_vf = self.vf.copy()
         self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)

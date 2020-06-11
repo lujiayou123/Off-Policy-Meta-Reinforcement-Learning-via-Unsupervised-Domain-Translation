@@ -17,7 +17,7 @@ class SACAgent(object):
         self.target_update_interval = 1  # target network更新间隔
         self.automatic_entropy_tuning = False  # 自动调熵
 
-        self.device = torch.device("cpu")
+        self.device = torch.device("cuda")
 
         self.critic = SACQNetwork(num_inputs=num_inputs, num_actions=action_space.shape[0], hidden_dim=256).to(device=self.device)  # Critic Network，Q网络
         self.critic_optim = Adam(self.critic.parameters(), lr=0.0003)
@@ -43,7 +43,14 @@ class SACAgent(object):
                 self.device)
             self.policy_optim = Adam(self.policy.parameters(), lr=0.0003)
 
+
+#利用prior来采集数据
     def select_action(self, state):
+###########################################################################
+        #z = self.z
+        #obs = ptu.from_numpy(obs[None])
+        #in_ = torch.cat([obs, z], dim=1)
+###########################################################################
         state = torch.FloatTensor(state).to(self.device).unsqueeze(0)
         # print(state)
         action, _, _ = self.policy.sample(state)  # action, log_prob, torch.tanh(mean)

@@ -61,8 +61,8 @@ class PEARLAgent(nn.Module):
         # initialize buffers for z dist and z
         # use buffers so latent context can be saved along with model weights
         self.register_buffer('z', torch.zeros(1, latent_dim))
-        self.register_buffer('z_means', torch.zeros(1, latent_dim))
-        self.register_buffer('z_vars', torch.zeros(1, latent_dim))
+        self.register_buffer('z_means', torch.zeros(1, latent_dim))#均值 mu
+        self.register_buffer('z_vars', torch.zeros(1, latent_dim))#方差 sigma2
 
         self.clear_z()
 

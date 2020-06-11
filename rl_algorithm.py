@@ -100,7 +100,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.plotter = plotter
         # self.alpha = alpha
 
-        self.explorer = SACExplorer(env=env,max_path_length=self.max_path_length)
+        self.explorer = SACExplorer(env=env, max_path_length=self.max_path_length, latent_dim=5)
 
         self.sampler = InPlacePathSampler(
             env=env,
@@ -133,7 +133,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # self._current_path_builder = PathBuilder()
         self._exploration_paths = []
 
-        self.debug = True
+        self.debug = False
 
     def train(self):
         '''
@@ -234,6 +234,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             print("\nStrating Meta-training ， Episode {}".format(iteration))
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
                 #更新explorer参数
+                '''
+                这里有点问题
+                '''
                 self.explorer.agent.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
                 #更新RL agent参数
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
@@ -267,14 +270,14 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                                                          max_trajs=1,
                                                                          random_steps=random_steps)
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
-                print("\nexploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
+                print("exploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
             else:#用于rl-training
                 paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
                                                                          max_trajs=1,
                                                                          accum_context=False,
                                                                          resample=1)
                 self.rl_replay_buffer.add_paths(self.task_idx, paths)
-                print("\nexploration buffer: {}, size: {}".format(self.task_idx, self.rl_replay_buffer.task_buffers[self.task_idx].size()))
+                print("RL buffer: {}, size: {}".format(self.task_idx, self.rl_replay_buffer.task_buffers[self.task_idx].size()))
                 #一边policy rollout一边更新后验,需要吗?不需要,因为已经花了很多时间在exploration & inference上面了.
                 # 而且如果Z在训练过程中变动较大,很可能导致训练不稳定
                 # context = self.prepare_context(self.task_idx)
@@ -304,7 +307,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         rewards = batch['rewards'][None, ...]
         next_obs = batch["next_observations"][None, ...]
         if debug:
-            print("batch:{}".format(batch))
+            # print("batch:{}".format(batch))
             print(obs.shape)
             print(act.shape)
             print(rewards.shape)
@@ -313,7 +316,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # context = self.prepare_encoder_data(obs, act, rewards,next_obs)
         if debug:
             print(context.shape)
-            print("context:{}".format(context))
+            # print("context:{}".format(context))
         return context
 
     def _try_to_eval(self, epoch):
