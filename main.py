@@ -80,7 +80,7 @@ updates = 0
 #     print(np.sum(episodes[i]["rewards"]))
 
 
-for i_episode in range(1000):#itertools.count(1)创建一个从start开始每次的步长是step的无穷序列
+for i_episode in range(5):#itertools.count(1)创建一个从start开始每次的步长是step的无穷序列
     episode_reward = 0
     episode_steps = 0
     done = False

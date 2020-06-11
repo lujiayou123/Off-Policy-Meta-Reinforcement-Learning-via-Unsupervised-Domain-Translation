@@ -2,7 +2,7 @@ import abc
 from collections import OrderedDict
 import time
 import numpy as np
-
+import torch
 from rlkit.core import logger, eval_util
 from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
 from rlkit.data_management.path_builder import PathBuilder
@@ -133,6 +133,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # self._current_path_builder = PathBuilder()
         self._exploration_paths = []
 
+        self.debug = True
+
     def train(self):
         '''
         meta-training loop
@@ -179,20 +181,52 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 print("\nSample data for task {}".format(i+1))#为每个任务的enc_buffer采集num_steps_prior条transition
                 idx = np.random.randint(len(self.train_tasks))#train_tasks里面随便选一个task
                 self.task_idx = idx
+                self.env.reset_task(idx)  # task重置
                 print("\ncollect some trajectories for task inference")
-                #5*100
-                for inference in range(self.num_task_inference):
-                    self.env.reset_task(idx)#task重置
+                #encoder is trained only on samples from the prior
+                for inference in range(self.num_task_inference):#每200步,infer一次后验,做5轮
+                    # self.env.reset_task(idx)  # task重置
+                    #explorer采集到的experience是否需要keep?我感觉要,因为explorer也需要更新网络
+                    #self.exploration_replay_buffer.task_buffers[idx].clear()
                 # collect data with explorer for task inference
                 # collect data本质上是rollout policy
                     print("\nInference {} :".format(inference+1))
-                    #采集num_exploration_steps步data
-                    self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)#利用z的先验采集num_steps_prior条transition
-                    #利用这些data进行task inference
-                    self.infer_task_belief()
+                    #collect experiences with prior
+                    self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)#利用z的先验采集experience
+                    '''
+                    update posterior distribution with collected experiences
+                        原先是只用prior采集数据到encoder buffer,采集期间不更新posterior.
+                    而在rl data collection时,从posterior中采样,利用采样出来的z来rollout,
+                    每采集一个trajectory就更新一次posterior
+                        现在还是先用prior采集数据到explorer buffer,
+                    不同的是,采集期间每采集200steps就更新一次posteroir,总共更新5轮.(理论上要确保posterior的质量,informative enough)
+                    而在rl data collection时,从posterior中采样一个Z,将其固定住,进行rollout,不再更新posterior
+                        
+                    pearl是一边执行策略,一边根据收集到的信息对task belief进行后验更新.
+                    然而pearl的policy不是纯粹的exploration policy,不可能一步到位得到最终的task belief,整个过程是循序渐进的,
+                    如果agent在adaptation时的task belief不准确(必然的),
+                    那么在后验的更新过程中,如果后验分布变化幅度足够大(有新发现,推翻之前的task belief),
+                    那么之前的effort就都白费了,相当于发现自己弄错了,策略需要重新调整,甚至逆转,导致curve出现大振荡.
+                    这就搞笑了,如果弄了半天都不知道自己要干嘛,那还弄个鸡巴.
+                    后验更新得有个限度,不能让他一直更新下去.
+                    因此用一个极限的探索策略先完成任务推断是合理的.
+                    
+                    而且如果最终performance不行,pearl很难trace.
+                    而这样改进下来,如果最终performance不行,问题应该可以trace到exploration上面.
+                    '''
+                    #prepare context for posterior update
+                    context = self.prepare_context(self.task_idx)
+                    #update posterior
+                    self.agent.infer_posterior(context)
+
+                    if self.debug:
+                        print(self.agent.z.shape)
+                        print(self.agent.z)
+
                 # collect data with actor for RL training
-                self.env.reset_task(idx)
+                # self.env.reset_task(idx)
                 print("\ncollect some trajectories for rl training")
+                # sample z ~ posterior for rl agent to utilize
                 self.collect_data(self.num_extra_rl_steps_posterior, exploration=False,  random_steps=0)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
             print("\nFinishing sample data from train tasks")
 ##############################################################################################
@@ -221,7 +255,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
     def collect_data(self, num_samples, exploration, random_steps=0):
         # start from the prior
-        # self.agent.clear_z()
+        self.agent.clear_z()
 
         total_steps = 0
         # total_episodes = 0
@@ -235,17 +269,52 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
                 print("\nexploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
             else:#用于rl-training
-                paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,max_trajs=1,accum_context=False,resample=1)
+                paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
+                                                                         max_trajs=1,
+                                                                         accum_context=False,
+                                                                         resample=1)
                 self.rl_replay_buffer.add_paths(self.task_idx, paths)
                 print("\nexploration buffer: {}, size: {}".format(self.task_idx, self.rl_replay_buffer.task_buffers[self.task_idx].size()))
+                #一边policy rollout一边更新后验,需要吗?不需要,因为已经花了很多时间在exploration & inference上面了.
+                # 而且如果Z在训练过程中变动较大,很可能导致训练不稳定
+                # context = self.prepare_context(self.task_idx)
+                # self.agent.infer_posterior(context)
 
             total_steps += n_steps
             # total_episodes += n_episodes
 
-            # if total_episodes % 5 == 0:#每5个episodes进行一次task inference
+
             #     context = self.sample_context(self.task_idx)
             #     self.agent.infer_posterior(context)
         self._n_env_steps_total += total_steps
+
+    # def prepare_encoder_data(self, obs, act, rewards, next_obs):
+    #     ''' prepare context for encoding '''
+    #     # for now we embed only observations and rewards
+    #     # assume obs and rewards are (task, batch, feat)
+    #     task_data = torch.cat([obs, act, rewards,next_obs], dim=2)
+    #     return task_data
+
+    def prepare_context(self, idx):
+        ''' sample context from replay buffer and prepare it '''
+        debug = True
+        batch = ptu.np_to_pytorch_batch(self.exploration_replay_buffer.random_batch(idx, batch_size=self.embedding_batch_size, sequence=self.recurrent))
+        obs = batch['observations'][None, ...]
+        act = batch['actions'][None, ...]
+        rewards = batch['rewards'][None, ...]
+        next_obs = batch["next_observations"][None, ...]
+        if debug:
+            print("batch:{}".format(batch))
+            print(obs.shape)
+            print(act.shape)
+            print(rewards.shape)
+            print(next_obs.shape)
+        context = torch.cat([obs, act, rewards, next_obs], dim=2)
+        # context = self.prepare_encoder_data(obs, act, rewards,next_obs)
+        if debug:
+            print(context.shape)
+            print("context:{}".format(context))
+        return context
 
     def _try_to_eval(self, epoch):
         logger.save_extra_data(self.get_extra_data_to_save(epoch))

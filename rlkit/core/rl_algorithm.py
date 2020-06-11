@@ -178,17 +178,22 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.enc_replay_buffer.task_buffers[idx].clear()#清除对应的enc_bufffer
 
                 # collect some trajectories with z ~ prior
-                if self.num_steps_prior > 0:
+                if self.num_steps_prior > 0:#这里的数据采集过程不需要prepare context推后验
                     print("\ncollect some trajectories with z ~ prior")
-                    self.collect_data(self.num_steps_prior, 1, np.inf)#利用z的先验采集num_steps_prior条transition
+                    self.collect_data(num_samples=self.num_steps_prior,
+                                      resample_z_rate=1,
+                                      update_posterior_rate=np.inf)#利用z的先验采集num_steps_prior条transition
                 # collect some trajectories with z ~ posterior
-                if self.num_steps_posterior > 0:
-                    print(  "\ncollect some trajectories with z ~ posterior")
-                    self.collect_data(self.num_steps_posterior, 1, self.update_post_train)#利用后验的z收集轨迹
+                # if self.num_steps_posterior > 0:
+                #     print(  "\ncollect some trajectories with z ~ posterior")
+                #     self.collect_data(self.num_steps_posterior, 1, self.update_post_train)#利用后验的z收集轨迹
                 # even if encoder is trained only on samples from the prior, the policy needs to learn to handle z ~ posterior
-                if self.num_extra_rl_steps_posterior > 0:
+                if self.num_extra_rl_steps_posterior > 0:#rl training一边采集一边prepare context推后验
                     print("\ncollect some trajectories for policy update only")
-                    self.collect_data(self.num_extra_rl_steps_posterior, 1, self.update_post_train, add_to_enc_buffer=False)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
+                    self.collect_data(num_samples=self.num_extra_rl_steps_posterior,
+                                      resample_z_rate=1,
+                                      update_posterior_rate=self.update_post_train,
+                                      add_to_enc_buffer=False)#利用后验的z收集num_extra_rl_steps_posterior条轨迹，仅用于策略
             print("\nFinishing sample data from train tasks")
             # Sample train tasks and compute gradient updates on parameters.
             print("\nStrating Meta-training ， Episode {}".format(it_))
@@ -250,10 +255,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 # print("enc_buffer ", self.task_idx, ":",self.enc_replay_buffer.task_buffers[self.task_idx])
                 print("enc_buffer",self.task_idx, "size:", self.enc_replay_buffer.task_buffers[self.task_idx].size())
                 # time.sleep(1)
+
             if update_posterior_rate != np.inf:#利用context更新后验z
-                # context = self.prepare_context(self.task_idx)
                 context = self.prepare_context(self.task_idx)
-                
                 self.agent.infer_posterior(context)
         self._n_env_steps_total += num_transitions
         gt.stamp('sample')

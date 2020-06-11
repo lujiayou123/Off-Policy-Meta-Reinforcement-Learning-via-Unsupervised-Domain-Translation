@@ -152,21 +152,7 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         terms = torch.cat(terms, dim=0)
         return [obs, actions, rewards, next_obs, terms]
 
-    def prepare_encoder_data(self, obs, act, rewards):
-        ''' prepare context for encoding '''
-        # for now we embed only observations and rewards
-        # assume obs and rewards are (task, batch, feat)
-        task_data = torch.cat([obs, act, rewards], dim=2)
-        return task_data
 
-    def prepare_context(self, idx):
-        ''' sample context from replay buffer and prepare it '''
-        batch = ptu.np_to_pytorch_batch(self.enc_replay_buffer.random_batch(idx, batch_size=self.embedding_batch_size, sequence=self.recurrent))
-        obs = batch['observations'][None, ...]
-        act = batch['actions'][None, ...]
-        rewards = batch['rewards'][None, ...]
-        context = self.prepare_encoder_data(obs, act, rewards)
-        return context
 
     ##### Training #####
     def _do_training(self, indices):#对indices中的任务进行训练

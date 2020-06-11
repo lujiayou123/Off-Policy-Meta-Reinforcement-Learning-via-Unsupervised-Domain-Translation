@@ -39,9 +39,9 @@ class MultiTaskReplayBuffer(object):
         self.task_buffers[task].terminate_episode()
 
     def random_batch(self, task, batch_size, sequence=False):
-        if sequence:
+        if sequence:#recurrent
             batch = self.task_buffers[task].random_sequence(batch_size)
-        else:
+        else:#not recurrent
             batch = self.task_buffers[task].random_batch(batch_size)
         return batch
 

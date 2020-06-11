@@ -32,15 +32,17 @@ def experiment(variant):
     tasks = env.get_all_task_idx()#采集任务
     obs_dim = int(np.prod(env.observation_space.shape))#观察空间维度
     action_dim = int(np.prod(env.action_space.shape))#动作空间维度
+    reward_dim = 1  # 1维奖赏
 
     # instantiate networks
     latent_dim = variant['latent_size']#隐变量维度
-    context_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim#用了信息瓶颈就x2，不用的话latent context就是确定的
-    reward_dim = 1#1维奖赏
+    context_encoder_input_dim = 2 * obs_dim + action_dim + reward_dim # *2 because use next state
+    context_encoder_output_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim#用了信息瓶颈就x2，不用的话latent context就是确定的
+
     net_size = variant['net_size']#网络大小
     recurrent = variant['algo_params']['recurrent']#是否RNN
-
     encoder_model = RNN if recurrent else MlpEncoder
+
     #RNN
     # context_encoder = encoder_model(
     #     input_size=obs_dim + action_dim + reward_dim,
@@ -49,44 +51,19 @@ def experiment(variant):
     #     output_size=context_dim
     # )
     #encoder_model = RecurrentEncoder if recurrent else MlpEncoder#RNN encoder或者MLP encoder（permutation invariant）
+
     #permutation invariant
     context_encoder = encoder_model(#上下文编码器
         hidden_sizes=[200, 200, 200],#3个200的隐藏层
-        input_size=obs_dim + action_dim + reward_dim,#输入层维度为s,a,r维度之和
-        output_size=context_dim,#33行，context维度
+        input_size=context_encoder_input_dim,#输入层维度为s,a,r维度之和
+        output_size=context_encoder_output_dim,#33行，context维度
     )
 
-
-
-
-
-    # qf1 = FlattenMlp(#多输入按列拍平，Q1网络
-    #     hidden_sizes=[net_size, net_size, net_size],
-    #     input_size=obs_dim + action_dim + latent_dim,
-    #     output_size=1,
-    # )
-    # qf2 = FlattenMlp(#Q2网络
-    #     hidden_sizes=[net_size, net_size, net_size],
-    #     input_size=obs_dim + action_dim + latent_dim,
-    #     output_size=1,
-    # )
     critic = QNetwork(obs_dim + latent_dim, action_dim, net_size)
-    # qf_optim = Adam(qf.parameters(),lr=variant['algo_params']['qf_lr'])
+
     critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size)
-    # hard_update(vf,qf)
-    # vf = FlattenMlp(#V值网络
-    #     hidden_sizes=[net_size, net_size, net_size],
-    #     input_size=obs_dim + latent_dim,
-    #     output_size=1,
-    # )
-    #原本输出action, mean, log_std, log_prob, expected_log_prob, std, mean_action_log_prob, pre_tanh_value,
+
     policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)#可以输出mean, log_std, action, log_prob, torch.tanh(mean)
-    # policy = TanhGaussianPolicy(#策略网络
-    #     hidden_sizes=[net_size, net_size, net_size],
-    #     obs_dim=obs_dim + latent_dim,
-    #     latent_dim=latent_dim,
-    #     action_dim=action_dim,
-    # )
 
     agent = PEARLAgent(
         latent_dim,
