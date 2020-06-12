@@ -19,7 +19,7 @@ from rlkit.launchers.launcher_util import setup_logger
 import rlkit.torch.pytorch_util as ptu
 from configs.default import default_config
 
-
+from sac.explorer import SACExplorer
 from sac.model import QNetwork,GaussianPolicy,DeterministicPolicy
 
 
@@ -55,15 +55,26 @@ def experiment(variant):
     #permutation invariant
     context_encoder = encoder_model(#上下文编码器
         hidden_sizes=[200, 200, 200],#3个200的隐藏层
-        input_size=context_encoder_input_dim,#输入层维度为s,a,r维度之和
+        input_size=context_encoder_input_dim,#输入层维度为s,a,r,s'维度之和
         output_size=context_encoder_output_dim,#33行，context维度
     )
-
+    '''
+    两个agent,一个RL agent,一个explorer
+    他们拥有各自的critic和critic_target
+    共享context encoder
+    相同的policy类型(Gaussian),不同的policy实例对象
+    '''
     critic = QNetwork(obs_dim + latent_dim, action_dim, net_size)
 
     critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size)
 
-    policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)#可以输出mean, log_std, action, log_prob, torch.tanh(mean)
+    exploration_critic = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+
+    exploration_critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+
+    policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)
+
+    exploration_policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)
 
     agent = PEARLAgent(
         latent_dim,
@@ -72,45 +83,26 @@ def experiment(variant):
         **variant['algo_params']
     )
 
+    #explorer只是一个PEARL agent,并不自带sampler功能
+    explorer = PEARLAgent(latent_dim,
+                           context_encoder,
+                           exploration_policy,
+                           **variant['algo_params'])
 
     algorithm = PEARLSoftActorCritic(
         env=env,
         train_tasks=list(tasks[:variant['n_train_tasks']]),#从前往后数，前n_train_tasks个任务
         eval_tasks=list(tasks[-variant['n_eval_tasks']:]),#从后往前数，第n_eval_tasks个任务
-        nets=[agent,critic,critic_target],
+        # nets=[agent,critic,critic_target],
+        nets=[agent, critic, critic_target, explorer, exploration_critic, exploration_critic_target],
         latent_dim=latent_dim,
         **variant['algo_params']
     )
-
-    # optionally load pre-trained weights
-    # if variant['path_to_weights'] is not None:
-    #     path = variant['path_to_weights']
-    #     context_encoder.load_state_dict(torch.load(os.path.join(path, 'context_encoder.pth')))
-    #     qf1.load_state_dict(torch.load(os.path.join(path, 'qf1.pth')))
-    #     qf2.load_state_dict(torch.load(os.path.join(path, 'qf2.pth')))
-    #     vf.load_state_dict(torch.load(os.path.join(path, 'vf.pth')))
-    #     # TODO hacky, revisit after model refactor
-    #     algorithm.networks[-2].load_state_dict(torch.load(os.path.join(path, 'target_vf.pth')))
-    #     policy.load_state_dict(torch.load(os.path.join(path, 'policy.pth')))
 
     # optional GPU mode
     ptu.set_gpu_mode(variant['util_params']['use_gpu'], variant['util_params']['gpu_id'])
     if ptu.gpu_enabled():
         algorithm.to()
-
-    # debugging triggers a lot of printing and logs to a debug directory
-    DEBUG = variant['util_params']['debug']
-    os.environ['DEBUG'] = str(int(DEBUG))
-
-    # create logging directory
-    # TODO support Docker
-    exp_id = 'debug' if DEBUG else None
-    experiment_log_dir = setup_logger(variant['env_name'], variant=variant, exp_id=exp_id, base_log_dir=variant['util_params']['base_log_dir'])
-
-    # optionally save eval trajectories as pkl files
-    if variant['algo_params']['dump_eval_paths']:
-        pickle_dir = experiment_log_dir + '/eval_trajectories'
-        pathlib.Path(pickle_dir).mkdir(parents=True, exist_ok=True)
 
     # run the algorithm
     print("State Dim:", obs_dim)

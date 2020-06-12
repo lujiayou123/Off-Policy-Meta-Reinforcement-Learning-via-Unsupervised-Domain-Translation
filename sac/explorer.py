@@ -4,7 +4,9 @@ import torch
 from rlkit.samplers.util import rollout
 from rlkit.torch.sac.policies import MakeDeterministic
 from sac.sacAgent import SACAgent
+import rlkit.torch.pytorch_util as ptu
 
+#explorer利用z采样
 def rollout(env, agent, max_path_length, random_steps=0):
     observations = []
     actions = []
@@ -12,16 +14,15 @@ def rollout(env, agent, max_path_length, random_steps=0):
     terminals = []
     next_observations = []
     o = env.reset()
-    next_o = None
     path_length = 0
 
     while path_length < max_path_length:
 
         if path_length < random_steps:
-            print("random")
+            print("random step")
             a = env.action_space.sample()
         else:
-            a = agent.select_action(o)
+            a = agent.get_action(o)#PEARLAgent
 
         next_o, r, d, _ = env.step(a)
         observations.append(o)
@@ -77,18 +78,10 @@ Algorithm:
         encoder输出task belief z
     把K次确定后的z给actor做task control
     """
-    def __init__(self, env, max_path_length, latent_dim):
+    def __init__(self, env, agent, max_path_length):
         self.env = env
-        '''
-        把z接到observation上面,作为输入
-        '''
-        self.agent = SACAgent(env.observation_space.shape[0] + latent_dim, env.action_space)
+        self.agent = agent#PEARLAgent
         self.max_path_length = max_path_length
-        # initialize buffers for z dist and z
-        # use buffers so latent context can be saved along with model weights
-        self.register_buffer('z', torch.zeros(1, latent_dim))
-        self.register_buffer('z_means', torch.zeros(1, latent_dim))  # 均值 mu
-        self.register_buffer('z_vars', torch.zeros(1, latent_dim))  # 方差 sigma2
 
     def obtain_samples(self, max_samples, max_trajs, random_steps):
         paths = []
@@ -100,6 +93,7 @@ Algorithm:
             n_steps_total += len(path['observations'])
             n_trajs += 1
         return paths, n_steps_total, n_trajs
+
 
 if __name__ == '__main__':
     pass

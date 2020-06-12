@@ -70,7 +70,7 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         self.use_information_bottleneck = use_information_bottleneck
         self.sparse_rewards = sparse_rewards
 
-        self.critic,self.critic_target = nets[1:]#q1,q2,target q1,target q2
+        self.critic,self.critic_target = nets[1:3]#q1,q2,target q1,target q2
         # self.target_vf = self.vf.copy()
         self.critic_optimizer = Adam(self.critic.parameters(), lr=lr)
         hard_update(self.critic_target,self.critic)

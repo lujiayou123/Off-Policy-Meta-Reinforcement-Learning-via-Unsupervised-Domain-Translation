@@ -16,6 +16,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self,
             env,
             agent,
+            explorer,
             train_tasks,
             eval_tasks,
             meta_batch=64,
@@ -61,6 +62,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.env = env
         self.agent = agent
+        self.explorer = explorer
         # self.exploration_agent = agent # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
@@ -100,7 +102,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.plotter = plotter
         # self.alpha = alpha
 
-        self.explorer = SACExplorer(env=env, max_path_length=self.max_path_length, latent_dim=5)
+        self.exploration_sampler = SACExplorer(env=env,
+                                              agent=explorer,#explorer is an instance of PEARLAgent
+                                              max_path_length=self.max_path_length)
 
         self.sampler = InPlacePathSampler(
             env=env,
@@ -258,7 +262,12 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
     def collect_data(self, num_samples, exploration, random_steps=0):
         # start from the prior
-        self.agent.clear_z()
+        if exploration:
+            print("explorer clear z")
+            self.explorer.clear_z()
+        else:
+            print("RL agent clear z")
+            self.agent.clear_z()
 
         total_steps = 0
         # total_episodes = 0
@@ -266,7 +275,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # self.sampler.obtain_samples(max_samples=num_samples - num_transitions,max_trajs=update_posterior_rate,accum_context=False,resample=resample_z_rate)
             #采集一条轨迹
             if exploration:#用于exploration
-                paths, n_steps, n_episodes= self.explorer.obtain_samples(max_samples=num_samples-total_steps,
+                paths, n_steps, n_episodes= self.exploration_sampler.obtain_samples(max_samples=num_samples-total_steps,
                                                                          max_trajs=1,
                                                                          random_steps=random_steps)
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
