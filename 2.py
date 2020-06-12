@@ -4,3 +4,5 @@ b = torch.zeros(4,5,6)
 # c = torch.cat([a,b],dim=2)
 d = torch.cat([a,b],dim=1)
 print(d.shape)
+nets = [1,2,3,4,5,6]
+print(nets[3])

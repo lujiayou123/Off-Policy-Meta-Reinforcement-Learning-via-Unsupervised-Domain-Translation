@@ -46,6 +46,7 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         super().__init__(
             env=env,
             agent=nets[0],
+            explorer = nets[3],
             train_tasks=train_tasks,
             eval_tasks=eval_tasks,
             **kwargs

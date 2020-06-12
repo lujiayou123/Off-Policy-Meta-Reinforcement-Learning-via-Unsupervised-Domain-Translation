@@ -52,7 +52,6 @@
     <list default="true" id="ea14ac27-3428-4617-886b-8bdd5ee4fcdf" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2.py" beforeDir="false" afterPath="$PROJECT_DIR$/2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/launch_experiment.py" beforeDir="false" afterPath="$PROJECT_DIR$/launch_experiment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rl_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_algorithm.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sac/explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/sac/explorer.py" afterDir="false" />
@@ -105,7 +104,7 @@
       <recent name="X:\Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.launch_experiment">
+  <component name="RunManager" selected="Python.2">
     <configuration name="2" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -216,8 +215,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.launch_experiment" />
         <item itemvalue="Python.2" />
+        <item itemvalue="Python.launch_experiment" />
         <item itemvalue="Python.main (1)" />
         <item itemvalue="Python.sacAgent" />
         <item itemvalue="Python.main" />
@@ -270,22 +269,22 @@
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
     <state x="659" y="143" width="668" height="817" key="#sacAgent/67.24.1853.1056@67.24.1853.1056" timestamp="1591337327389" />
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1591927329145">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1591928964528">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1591927329145" />
-    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1591927329145">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964528" />
+    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1591928964525">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1591927329145" />
-    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1591927329145">
+    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964525" />
+    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1591928964524">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1591927329145" />
-    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1591927329145">
+    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964524" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1591928964526">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1591927329145" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964526" />
     <state width="1830" height="365" key="GridCell.Tab.1.bottom" timestamp="1591840968909">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>

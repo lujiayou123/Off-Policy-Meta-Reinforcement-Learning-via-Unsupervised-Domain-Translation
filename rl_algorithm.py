@@ -309,7 +309,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
     def prepare_context(self, idx):
         ''' sample context from replay buffer and prepare it '''
-        debug = True
+        debug = False
         batch = ptu.np_to_pytorch_batch(self.exploration_replay_buffer.random_batch(idx, batch_size=self.embedding_batch_size, sequence=self.recurrent))
         obs = batch['observations'][None, ...]
         act = batch['actions'][None, ...]

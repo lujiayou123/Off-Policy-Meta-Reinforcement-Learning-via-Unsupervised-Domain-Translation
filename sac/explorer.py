@@ -22,8 +22,7 @@ def rollout(env, agent, max_path_length, random_steps=0):
             print("random step")
             a = env.action_space.sample()
         else:
-            a = agent.get_action(o)#PEARLAgent
-
+            a, agent_info = agent.get_action(o)#PEARLAgent.get_action(),return tuple
         next_o, r, d, _ = env.step(a)
         observations.append(o)
         actions.append(a)
