@@ -115,6 +115,7 @@ class PEARLAgent(nn.Module):
     def infer_posterior(self, context):
         ''' compute q(z|c) as a function of input context and sample new z from it'''
         '''
+        相当于用context更新一下z的分布,并从更新后的分布中采样z
         context作为encoder的输入,encoder前向传播得到params
         params的前5维作为mu,后5维做softplus作为sigma_squared
         mu和sigma_squared作为_product_of_gaussians函数的参数,得到z_params

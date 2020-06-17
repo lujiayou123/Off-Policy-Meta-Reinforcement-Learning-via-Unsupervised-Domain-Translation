@@ -189,9 +189,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 print("\ncollect some trajectories for task inference")
                 #encoder is trained only on samples from the prior
                 for inference in range(self.num_task_inference):#每200步,infer一次后验,做5轮
-                    # self.env.reset_task(idx)  # task重置
-                    #explorer采集到的experience是否需要keep?我感觉要,因为explorer也需要更新网络
-                    #self.exploration_replay_buffer.task_buffers[idx].clear()
                 # collect data with explorer for task inference
                 # collect data本质上是rollout policy
                     print("\nInference {} :".format(inference+1))
@@ -220,15 +217,17 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     '''
                     #这么写的话是收集完了所有数据,再开始推后验
                     #如果一边收集一边推后验的话应该把下面这段写在collect_data()函数里面
-                    #prepare context for posterior update
-                    context = self.prepare_context(self.task_idx)
-                    #update posterior
-                    self.agent.infer_posterior(context)
+                    # #prepare context for posterior update
+                    # context = self.prepare_context(self.task_idx)
+                    # #update posterior
+                    # self.agent.infer_posterior(context)
 
                     if self.debug:
                         print(self.agent.z.shape)
                         print(self.agent.z)
-
+                '''
+                explorer采集k轮之后的
+                '''
                 # collect data with actor for RL training
                 # self.env.reset_task(idx)
                 print("\ncollect some trajectories for rl training")
@@ -265,15 +264,19 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     def collect_data(self, num_samples, exploration, random_steps=0):
         # start from the prior
         if exploration:
-            print("explorer clear z")
+            print("explorer clear z, sample data from prior")
             '''
+            每次都从prior采样
             agent.clear_z()函数
             将分布重置为标准正态分布,然后从中采样z
             '''
             self.explorer.clear_z()
         else:
-            print("RL agent clear z")
-            self.agent.clear_z()
+            '''
+            explorer在k轮更新后的z作为rl的初始z,为rl agent所利用,z之后不再改动
+            '''
+            print("RL agent initialize z with explorer's z")
+            self.agent.z = self.explorer.z
 
         total_steps = 0
         # total_episodes = 0
@@ -286,6 +289,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                                                          random_steps=random_steps)
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
                 print("exploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
+
+                print("sample context,update posterior,then sample z from it")
+                # prepare context for posterior update
+                context = self.prepare_context(self.task_idx)
+                # update posterior
+                print("old z:", self.explorer.z)
+                self.explorer.infer_posterior(context)
+                print("new z:", self.explorer.z)
+
             else:#用于rl-training
                 paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
                                                                          max_trajs=1,
