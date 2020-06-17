@@ -1,11 +1,8 @@
 import numpy as np
-
 import torch
 from torch import nn as nn
 import torch.nn.functional as F
-
 import rlkit.torch.pytorch_util as ptu
-
 
 def _product_of_gaussians(mus, sigmas_squared):
     '''
@@ -72,11 +69,12 @@ class PEARLAgent(nn.Module):
         sample a new z from the prior
         '''
         # reset distribution over z to the prior
-        mu = ptu.zeros(num_tasks, self.latent_dim)
+        mu = ptu.zeros(num_tasks, self.latent_dim)#均值
         if self.use_ib:
-            var = ptu.ones(num_tasks, self.latent_dim)
+            var = ptu.ones(num_tasks, self.latent_dim)#方差
         else:
             var = ptu.zeros(num_tasks, self.latent_dim)
+        # print("mu:{},var:{}".format(mu,var))
         self.z_means = mu
         self.z_vars = var
         # sample a new z from the prior
@@ -116,15 +114,25 @@ class PEARLAgent(nn.Module):
 
     def infer_posterior(self, context):
         ''' compute q(z|c) as a function of input context and sample new z from it'''
+        '''
+        context作为encoder的输入,encoder前向传播得到params
+        params的前5维作为mu,后5维做softplus作为sigma_squared
+        mu和sigma_squared作为_product_of_gaussians函数的参数,得到z_params
+        z_params[0]就是均值,z_params[1]就是方差
+        '''
     ###############################################
-        params = self.context_encoder(context)
+        params = self.context_encoder(context)#[1,256,10][1,batch_size,latent_dim*2]
     ###############################################
-        params = params.view(context.size(0), -1, self.context_encoder.output_size)
+        #context size : [1,256,63]
+        params = params.view(context.size(0), -1, self.context_encoder.output_size)#params的size标准化
         # with probabilistic z, predict mean and variance of q(z | c)
         if self.use_ib:
-            mu = params[..., :self.latent_dim]
-            sigma_squared = F.softplus(params[..., self.latent_dim:])
+            # params[1,256,10] mu[1,256,latent_dim]
+            mu = params[..., :self.latent_dim]#前5个
+            #softplus: log(1+e的x次方)
+            sigma_squared = F.softplus(params[..., self.latent_dim:])#后5个
             z_params = [_product_of_gaussians(m, s) for m, s in zip(torch.unbind(mu), torch.unbind(sigma_squared))]
+            #[tensor(1,5),tensor(1,5)],mean,var
             self.z_means = torch.stack([p[0] for p in z_params])
             self.z_vars = torch.stack([p[1] for p in z_params])
         # sum rather than product of gaussians structure
@@ -134,6 +142,7 @@ class PEARLAgent(nn.Module):
 
     def sample_z(self):
         if self.use_ib:
+            # m表示均值,s表示标准差
             posteriors = [torch.distributions.Normal(m, torch.sqrt(s)) for m, s in zip(torch.unbind(self.z_means), torch.unbind(self.z_vars))]
             z = [d.rsample() for d in posteriors]
             self.z = torch.stack(z)
@@ -186,6 +195,21 @@ class PEARLAgent(nn.Module):
     def networks(self):
         return [self.context_encoder, self.policy]
 
-
+# if __name__ == '__main__':
+#     env = gym.make("Humanoid-v2")
+#     obs_dim = env.observation_space.shape[0]
+#     action_dim = env.action_space.shape[0]
+#     latent_dim = 5
+#     reward_dim = 1
+#     net_size =200
+#     print("obs_dim:{},action_dim:{},latent_dim:{},reward_dim:{}".format(obs_dim,action_dim,latent_dim,reward_dim))
+#     context_encoder = MlpEncoder(  # 上下文编码器
+#         hidden_sizes=[200, 200, 200],  # 3个200的隐藏层
+#         input_size=2*obs_dim+action_dim+reward_dim,  # 输入层维度为s,a,r,s'维度之和27,13,1,27
+#         output_size=latent_dim*2,  # 33行，context维度
+#     )
+#     policy = GaussianPolicy(obs_dim+latent_dim, action_dim, net_size, env.action_space)
+#     agent = PEARLAgent(latent_dim=latent_dim,context_encoder=context_encoder,policy=policy)
+#     print("z:{}".format(agent.z))
 
 

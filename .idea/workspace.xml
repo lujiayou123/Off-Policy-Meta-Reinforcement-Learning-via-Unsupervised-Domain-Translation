@@ -52,9 +52,11 @@
     <list default="true" id="ea14ac27-3428-4617-886b-8bdd5ee4fcdf" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/2.py" beforeDir="false" afterPath="$PROJECT_DIR$/2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/default.py" beforeDir="false" afterPath="$PROJECT_DIR$/configs/default.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/launch_experiment.py" beforeDir="false" afterPath="$PROJECT_DIR$/launch_experiment.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rl_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_algorithm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/sac/agent.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/sac/explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/sac/explorer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,6 +129,27 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="agent" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rlkit/torch/sac" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rlkit/torch/sac/agent.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="launch_experiment" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -170,28 +193,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/sac" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="X:\Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation\main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="sacAgent" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Off-Policy-Meta-Reinforcement-Learning-via-Unsupervised-Domain-Translation" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -216,10 +217,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.2" />
+        <item itemvalue="Python.agent" />
         <item itemvalue="Python.launch_experiment" />
         <item itemvalue="Python.main (1)" />
         <item itemvalue="Python.sacAgent" />
-        <item itemvalue="Python.main" />
       </list>
     </recent_temporary>
   </component>
@@ -269,22 +270,22 @@
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
     <state x="659" y="143" width="668" height="817" key="#sacAgent/67.24.1853.1056@67.24.1853.1056" timestamp="1591337327389" />
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1591928964528">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1592284791634">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964528" />
-    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1591928964525">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1592284791634" />
+    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1592284791633">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964525" />
-    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1591928964524">
+    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1592284791633" />
+    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1592284791633">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964524" />
-    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1591928964526">
+    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1592284791633" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1592284791634">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1591928964526" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1592284791634" />
     <state width="1830" height="365" key="GridCell.Tab.1.bottom" timestamp="1591840968909">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>

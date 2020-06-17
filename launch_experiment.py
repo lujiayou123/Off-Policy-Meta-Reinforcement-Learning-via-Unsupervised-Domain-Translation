@@ -82,12 +82,14 @@ def experiment(variant):
         policy,
         **variant['algo_params']
     )
+    print("initial z of agent:",agent.z)
 
     #explorer只是一个PEARL agent,并不自带sampler功能
     explorer = PEARLAgent(latent_dim,
                            context_encoder,
                            exploration_policy,
                            **variant['algo_params'])
+    print("initial z of explorer:", explorer.z)
 
     algorithm = PEARLSoftActorCritic(
         env=env,
@@ -107,7 +109,7 @@ def experiment(variant):
     # run the algorithm
     print("State Dim:", obs_dim)
     print("Action Dim:", action_dim)
-    print("alpha:",algorithm.alpha)
+    # print("alpha:",algorithm.alpha)
     print("automatic_entropy_tuning:",algorithm.automatic_entropy_tuning)
     print("\ntasks:{}".format(tasks))
     print("train tasks:{}".format(list(tasks[:variant['n_train_tasks']])))

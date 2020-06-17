@@ -11,7 +11,14 @@ from rlkit.core.rl_algorithm import MetaRLAlgorithm
 
 import torch.nn.functional as F
 from torch.optim import Adam
-from sac.utils import soft_update,hard_update
+
+def soft_update(target, source, tau):
+    for target_param, param in zip(target.parameters(), source.parameters()):
+        target_param.data.copy_(target_param.data * (1.0 - tau) + param.data * tau)
+
+def hard_update(target, source):
+    for target_param, param in zip(target.parameters(), source.parameters()):
+        target_param.data.copy_(param.data)
 
 
 class PEARLSoftActorCritic(MetaRLAlgorithm):

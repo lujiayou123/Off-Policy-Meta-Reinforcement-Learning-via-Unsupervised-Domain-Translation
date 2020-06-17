@@ -23,7 +23,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             num_iterations=100,
             num_train_steps_per_itr=1000,
             num_initial_steps=100,
-            num_exploration_steps=400,
+            num_exploration_steps=200,
             num_rl_training_steps=400,
             num_random_steps=50,
             num_exploration_episodes=3,
@@ -218,6 +218,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     而且如果最终performance不行,pearl很难trace.
                     而这样改进下来,如果最终performance不行,问题应该可以trace到exploration上面.
                     '''
+                    #这么写的话是收集完了所有数据,再开始推后验
+                    #如果一边收集一边推后验的话应该把下面这段写在collect_data()函数里面
                     #prepare context for posterior update
                     context = self.prepare_context(self.task_idx)
                     #update posterior
@@ -264,6 +266,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # start from the prior
         if exploration:
             print("explorer clear z")
+            '''
+            agent.clear_z()函数
+            将分布重置为标准正态分布,然后从中采样z
+            '''
             self.explorer.clear_z()
         else:
             print("RL agent clear z")
@@ -308,7 +314,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     #     return task_data
 
     def prepare_context(self, idx):
-        ''' sample context from replay buffer and prepare it '''
+        '''
+        sample context from replay buffer and prepare it
+        从exploration_replay_buffer里采样embedding_batch_size条数据,然后按照dim=2,cat起来
+        '''
         debug = False
         batch = ptu.np_to_pytorch_batch(self.exploration_replay_buffer.random_batch(idx, batch_size=self.embedding_batch_size, sequence=self.recurrent))
         obs = batch['observations'][None, ...]
@@ -325,6 +334,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         # context = self.prepare_encoder_data(obs, act, rewards,next_obs)
         if debug:
             print(context.shape)
+        # print(context.shape)
             # print("context:{}".format(context))
         return context
 
