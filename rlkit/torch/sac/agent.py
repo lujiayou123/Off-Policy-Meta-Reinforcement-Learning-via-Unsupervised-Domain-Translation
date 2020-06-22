@@ -165,8 +165,8 @@ class PEARLAgent(nn.Module):
 
     def forward(self, obs, context):
         ''' given context, get statistics under the current policy of a set of observations '''
-        self.infer_posterior(context)
-        self.sample_z()
+        self.infer_posterior(context)#利用context更新后验分布
+        self.sample_z()#从新的分布中采样z
 
         task_z = self.z
 

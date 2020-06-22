@@ -188,6 +188,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.task_idx = idx
                 self.env.reset_task(idx)  # task重置
                 print("\ncollect some trajectories for task inference")
+    #每次buffer是否需要重置?
                 #encoder is trained only on samples from the prior
                 for inference in range(self.num_task_inference):#每200步,infer一次后验,做5轮
                 # collect data with explorer for task inference
@@ -241,9 +242,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
                 #更新explorer参数
                 '''
-                这里有点问题
+                出问题了,explorer参数没有得到更新
                 '''
-                self.explorer.agent.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
+                # self.explorer.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
                 #更新RL agent参数
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
                 if ((train_step + 1) % 500 == 0):
@@ -321,12 +322,12 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             #     self.agent.infer_posterior(context)
         self._n_env_steps_total += total_steps
 
-    # def prepare_encoder_data(self, obs, act, rewards, next_obs):
-    #     ''' prepare context for encoding '''
-    #     # for now we embed only observations and rewards
-    #     # assume obs and rewards are (task, batch, feat)
-    #     task_data = torch.cat([obs, act, rewards,next_obs], dim=2)
-    #     return task_data
+    def prepare_encoder_data(self, obs, act, rewards, next_obs):
+        ''' prepare context for encoding '''
+        # for now we embed only observations and rewards
+        # assume obs and rewards are (task, batch, feat)
+        task_data = torch.cat([obs, act, rewards,next_obs], dim=2)
+        return task_data
 
     def prepare_context(self, idx):
         '''
@@ -345,8 +346,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             print(act.shape)
             print(rewards.shape)
             print(next_obs.shape)
-        context = torch.cat([obs, act, rewards, next_obs], dim=2)
-        # context = self.prepare_encoder_data(obs, act, rewards,next_obs)
+        context = self.prepare_encoder_data(obs, act, rewards,next_obs)
         if debug:
             print(context.shape)
         # print(context.shape)
