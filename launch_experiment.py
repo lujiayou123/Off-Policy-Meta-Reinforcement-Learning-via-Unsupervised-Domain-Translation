@@ -43,6 +43,8 @@ def experiment(variant):
     recurrent = variant['algo_params']['recurrent']#是否RNN
     encoder_model = RNN if recurrent else MlpEncoder
 
+    device = "cuda"
+
     #RNN
     # context_encoder = encoder_model(
     #     input_size=obs_dim + action_dim + reward_dim,
@@ -64,17 +66,17 @@ def experiment(variant):
     共享context encoder
     相同的policy类型(Gaussian),不同的policy实例对象
     '''
-    critic = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+    critic = QNetwork(obs_dim + latent_dim, action_dim, net_size).to(device)
 
-    critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+    critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size).to(device)
 
-    exploration_critic = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+    exploration_critic = QNetwork(obs_dim + latent_dim, action_dim, net_size).to(device)
 
-    exploration_critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size)
+    exploration_critic_target = QNetwork(obs_dim + latent_dim, action_dim, net_size).to(device)
 
-    policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)
+    policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space).to(device)
 
-    exploration_policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space)
+    exploration_policy = GaussianPolicy(obs_dim + latent_dim, action_dim, net_size, env.action_space).to(device)
 
     agent = PEARLAgent(
         latent_dim,
@@ -104,7 +106,7 @@ def experiment(variant):
     # optional GPU mode
     ptu.set_gpu_mode(variant['util_params']['use_gpu'], variant['util_params']['gpu_id'])
     if ptu.gpu_enabled():
-        algorithm.to()
+        algorithm.to(device=device)
 
     # run the algorithm
     print("State Dim:", obs_dim)

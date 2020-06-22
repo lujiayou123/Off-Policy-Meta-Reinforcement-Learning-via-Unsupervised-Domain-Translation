@@ -241,7 +241,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             print("\nFinishing sample data from train tasks")
 ##############################################################################################
             # Sample train tasks and compute gradient updates on parameters.
-            print("\nStrating Meta-training ， Iteration {}".format(iteration))
+            print("\nStrating Meta-training for Iteration {}".format(iteration))
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
                 #更新explorer参数
                 # self.explorer.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
@@ -249,7 +249,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
                 if ((train_step + 1) % 500 == 0):
                     print("\nTraining step {}".format(train_step + 1))
-                    print("Indices: {}".format(indices))
+                    print("Task indices: {}".format(indices))
                     # print("alpha:{}".format(self.alpha))
                 self._do_training(indices)#梯度下降
                 self._n_train_steps_total += 1
