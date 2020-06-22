@@ -51,9 +51,10 @@
   <component name="ChangeListManager">
     <list default="true" id="ea14ac27-3428-4617-886b-8bdd5ee4fcdf" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/configs/default.py" beforeDir="false" afterPath="$PROJECT_DIR$/configs/default.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rl_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_algorithm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rlkit/samplers/in_place.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/samplers/in_place.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/agent.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/sac/agent.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sac/explorer.py" beforeDir="false" afterPath="$PROJECT_DIR$/sac/explorer.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

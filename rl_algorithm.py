@@ -105,12 +105,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.exploration_sampler = SACExplorer(env=env,
                                               agent=explorer,#explorer is an instance of PEARLAgent
                                               max_path_length=self.max_path_length)
+        self.sampler = SACExplorer(env=env,
+                                    agent=explorer,  # explorer is an instance of PEARLAgent
+                                    max_path_length=self.max_path_length)
 
-        self.sampler = InPlacePathSampler(
-            env=env,
-            policy=agent,
-            max_path_length=self.max_path_length,
-        )
+        # self.sampler = InPlacePathSampler(
+        #     env=env,
+        #     policy=agent,
+        #     max_path_length=self.max_path_length,
+        # )
 
         # separate replay buffers for
         # - training encoder update(collected by explorer SAC)
@@ -303,10 +306,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     print("new z:", self.explorer.z)
 
             else:#用于rl-training
-                paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
-                                                                         max_trajs=1,
-                                                                         accum_context=False,
-                                                                         resample=1)
+                # paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
+                #                                                          max_trajs=1,
+                #                                                          accum_context=False,
+                #                                                          resample=1)
+                paths, n_steps, n_episodes = self.sampler.obtain_samples(
+                    max_samples=num_samples - total_steps,
+                    max_trajs=1,  # 只采集一条轨迹
+                    random_steps=random_steps)
+
                 self.rl_replay_buffer.add_paths(self.task_idx, paths)
                 print("RL buffer: {}, size: {}".format(self.task_idx, self.rl_replay_buffer.task_buffers[self.task_idx].size()))
                 #一边policy rollout一边更新后验,需要吗?不需要,因为已经花了很多时间在exploration & inference上面了.

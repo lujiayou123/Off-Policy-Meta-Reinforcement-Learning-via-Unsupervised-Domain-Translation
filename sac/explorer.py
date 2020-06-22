@@ -87,7 +87,7 @@ Algorithm:
         n_steps_total = 0
         n_trajs = 0
         while n_steps_total < max_samples and n_trajs < max_trajs:
-            path = rollout(env=self.env,agent=self.agent,max_path_length=self.max_path_length,random_steps=random_steps)
+            path = rollout(env=self.env,agent=self.agent,max_path_length=self.max_path_length, random_steps=random_steps)
             paths.append(path)
             n_steps_total += len(path['observations'])
             n_trajs += 1
