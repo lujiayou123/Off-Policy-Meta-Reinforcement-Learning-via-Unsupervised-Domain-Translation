@@ -96,9 +96,6 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         hard_update(self.exploration_critic_target, self.exploration_critic)
         self.exploration_policy_optimizer = Adam(self.explorer.policy.parameters(), lr=policy_lr)  # 都是高斯策略
 
-        self.explorer_target_entropy = -torch.prod(torch.Tensor(env.action_space.shape)).to("cuda").item()
-        self.explorer_log_alpha = torch.zeros(1)
-
         #for both
         self.debug = True
         self.original_plan = True
@@ -230,8 +227,6 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         # scale rewards for Bellman update
         rewards_flat = rewards_flat * self.reward_scale
         terms_flat = terms.view(self.batch_size * num_tasks, -1)
-        print("alpha:", self.explorer_alpha)
-        time.sleep(100)
         # q=r+(1-d)γ(Vst+1)
         q_target = rewards_flat + (1. - terms_flat) * self.discount * (min_qf_next_target - self.explorer_alpha * log_pi)
         q1_loss = torch.mean((q1 - q_target) ** 2)
@@ -364,14 +359,12 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         self.policy_optimizer.step()
 
         if self.automatic_entropy_tuning:
+            #log_alpha是cuda,log_pi不是,target_entropy是float
             alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()  # E[-αlogπ(at|st)-αH]
             self.alpha_optim.zero_grad()
             alpha_loss.backward(retain_graph=True)
             self.alpha_optim.step()
             self.alpha = self.log_alpha.exp()
-        else:
-            alpha_loss = 0
-            alpha = 1
 
         # save some statistics for eval
         if self.eval_statistics is None:

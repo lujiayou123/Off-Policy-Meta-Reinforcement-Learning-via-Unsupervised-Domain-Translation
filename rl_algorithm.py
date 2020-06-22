@@ -182,7 +182,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 # 利用explorer再采集num_steps_prior步,利用这些data进行task inference
 # 利用actor采集num_extra_rl_steps_posterior步,利用这些data以及inference得到的task belief进行task control
             for i in range(self.num_tasks_sample):#对于所有的train_tasks，随机从中取5个，然后为每个任务的buffer采集num_steps_prior + num_extra_rl_steps_posterior条transition
-                print("data sampling round {}/{}".format(i+1,self.num_tasks_sample))
+                print("\nData Sampling Round {}/{}:".format(i+1,self.num_tasks_sample))
                 idx = np.random.randint(len(self.train_tasks))#train_tasks里面随便选一个task
                 print("\nSample data for task {}".format(idx))
                 self.task_idx = idx
@@ -238,19 +238,16 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             print("\nFinishing sample data from train tasks")
 ##############################################################################################
             # Sample train tasks and compute gradient updates on parameters.
-            print("\nStrating Meta-training ， Episode {}".format(iteration))
+            print("\nStrating Meta-training ， Iteration {}".format(iteration))
             for train_step in range(self.num_train_steps_per_itr):#每轮迭代计算num_train_steps_per_itr次梯度              500x2000=1000000
                 #更新explorer参数
-                '''
-                出问题了,explorer参数没有得到更新
-                '''
                 # self.explorer.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
                 #更新RL agent参数
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
                 if ((train_step + 1) % 500 == 0):
                     print("\nTraining step {}".format(train_step + 1))
                     print("Indices: {}".format(indices))
-                    print("alpha:{}".format(self.alpha))
+                    # print("alpha:{}".format(self.alpha))
                 self._do_training(indices)#梯度下降
                 self._n_train_steps_total += 1
 
@@ -294,13 +291,16 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.exploration_replay_buffer.add_paths(self.task_idx, paths)
                 print("exploration buffer: {}, size: {}".format(self.task_idx,self.exploration_replay_buffer.task_buffers[self.task_idx].size()))
 
-                print("sample context,update posterior,then sample z from it")
+
                 # prepare context for posterior update
                 context = self.prepare_context(self.task_idx)
                 # update posterior
-                print("old z:", self.explorer.z)
+                if self.debug:
+                    print("sample context,update posterior,then sample z from it")
+                    print("old z:", self.explorer.z)
                 self.explorer.infer_posterior(context)
-                print("new z:", self.explorer.z)
+                if self.debug:
+                    print("new z:", self.explorer.z)
 
             else:#用于rl-training
                 paths, n_steps, n_episodes = self.sampler.obtain_samples(max_samples=num_samples - total_steps,
