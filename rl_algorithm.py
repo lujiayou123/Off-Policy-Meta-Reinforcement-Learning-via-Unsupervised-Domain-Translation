@@ -171,9 +171,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.task_idx = idx#更改当前任务idx
                     self.env.reset_task(idx)#重置任务
                     #采集xxx步随机数据用于task inference
-                    # self.collect_data(num_samples=self.num_initial_steps/2,
-                    #                   exploration=True,
-                    #                   random_steps=self.num_initial_steps/2)#随机xxx步给exploration buffer
+                    self.collect_data(num_samples=self.embedding_batch_size,
+                                      exploration=True,
+                                      random_steps=self.embedding_batch_size)#随机embedding_batch_size防止buffer不够
                     #采集xxx步随机数据用于rl training
                     self.collect_data(num_samples=self.num_initial_steps,
                                       exploration=False,
@@ -185,7 +185,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 # 利用explorer再采集num_steps_prior步,利用这些data进行task inference
 # 利用actor采集num_extra_rl_steps_posterior步,利用这些data以及inference得到的task belief进行task control
             for i in range(self.num_tasks_sample):#对于所有的train_tasks，随机从中取5个，然后为每个任务的buffer采集num_steps_prior + num_extra_rl_steps_posterior条transition
-                print("\nData Sampling Round {}/{}:".format(i+1,self.num_tasks_sample))
+                print("\nData Sampling Round {}/{}:".format(i+1, self.num_tasks_sample))
                 idx = np.random.randint(len(self.train_tasks))#train_tasks里面随便选一个task
                 print("\nSample data for task {}".format(idx))
                 self.task_idx = idx
@@ -362,31 +362,31 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         return context
 
     def _try_to_eval(self, epoch):
-        logger.save_extra_data(self.get_extra_data_to_save(epoch))
+        # logger.save_extra_data(self.get_extra_data_to_save(epoch))
         if self._can_evaluate():
             self.evaluate(epoch)
 
             params = self.get_epoch_snapshot(epoch)
             logger.save_itr_params(epoch, params)
-            table_keys = logger.get_table_key_set()
-            if self._old_table_keys is not None:
-                assert table_keys == self._old_table_keys, (
-                    "Table keys cannot change from iteration to iteration."
-                )
-            self._old_table_keys = table_keys
+            # table_keys = logger.get_table_key_set()
+            # if self._old_table_keys is not None:
+            #     assert table_keys == self._old_table_keys, (
+            #         "Table keys cannot change from iteration to iteration."
+            #     )
+            # self._old_table_keys = table_keys
 
             logger.record_tabular(
                 "Number of train steps total",
                 self._n_train_steps_total,
             )
-            logger.record_tabular(
-                "Number of env steps total",
-                self._n_env_steps_total,
-            )
-            logger.record_tabular(
-                "Number of rollouts total",
-                self._n_rollouts_total,
-            )
+            # logger.record_tabular(
+            #     "Number of env steps total",
+            #     self._n_env_steps_total,
+            # )
+            # logger.record_tabular(
+            #     "Number of rollouts total",
+            #     self._n_rollouts_total,
+            # )
             logger.record_tabular("Epoch", epoch)
             logger.dump_tabular(with_prefix=False, with_timestamp=False)
         else:
@@ -460,46 +460,47 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             data_to_save['algorithm'] = self
         return data_to_save
 
-    def collect_paths(self, idx, epoch, run):
+    # def collect_paths(self, idx, epoch, run):
+    def collect_paths(self, idx):#收集数据进行评估
         self.task_idx = idx
         self.env.reset_task(idx)
 
-        self.agent.clear_z()
+        self.explorer.clear_z()
         paths = []
         num_transitions = 0
         num_trajs = 0
         while num_transitions < self.num_steps_per_eval:
-            path, num = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
-                                                    max_samples=self.num_steps_per_eval - num_transitions, max_trajs=1,
-                                                    accum_context=True)
+            path, step, traj = self.sampler.obtain_samples(max_samples=self.num_steps_per_eval - num_transitions,
+                                                    max_trajs=1,
+                                                    random_steps=0)
             paths += path
-            num_transitions += num
+            num_transitions += step
             num_trajs += 1
             if num_trajs >= self.num_exp_traj_eval:
                 self.agent.infer_posterior(self.agent.context)
 
-        if self.sparse_rewards:
-            for p in paths:
-                sparse_rewards = np.stack(e['sparse_reward'] for e in p['env_infos']).reshape(-1, 1)
-                p['rewards'] = sparse_rewards
+        # if self.sparse_rewards:
+        #     for p in paths:
+        #         sparse_rewards = np.stack(e['sparse_reward'] for e in p['env_infos']).reshape(-1, 1)
+        #         p['rewards'] = sparse_rewards
 
         goal = self.env._goal
         for path in paths:
             path['goal'] = goal  # goal
 
         # save the paths for visualization, only useful for point mass
-        if self.dump_eval_paths:
-            logger.save_extra_data(paths, path='eval_trajectories/task{}-epoch{}-run{}'.format(idx, epoch, run))
+        # if self.dump_eval_paths:
+        #     logger.save_extra_data(paths, path='eval_trajectories/task{}-epoch{}-run{}'.format(idx, epoch, run))
 
         return paths
 
     def _do_eval(self, indices, epoch):
         final_returns = []
         online_returns = []
-        for idx in indices:
+        for idx in indices:#对所有任务:
             all_rets = []
             for r in range(self.num_evals):
-                paths = self.collect_paths(idx, epoch, r)
+                paths = self.collect_paths(idx)
                 all_rets.append([eval_util.get_average_returns([p]) for p in paths])
             final_returns.append(np.mean([a[-1] for a in all_rets]))
             # record online returns for the first n trajectories
@@ -516,19 +517,24 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.eval_statistics = OrderedDict()
 
         ### sample trajectories from prior for debugging / visualization
-        if self.dump_eval_paths:
-            # 100 arbitrarily chosen for visualizations of point_robot trajectories
-            # just want stochasticity of z, not the policy
-            self.agent.clear_z()
-            prior_paths, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
-                                                         max_samples=self.max_path_length * 20,
-                                                         accum_context=False,
-                                                         resample=1)
-            logger.save_extra_data(prior_paths, path='eval_trajectories/prior-epoch{}'.format(epoch))
+        # if self.dump_eval_paths:
+        #     # 100 arbitrarily chosen for visualizations of point_robot trajectories
+        #     # just want stochasticity of z, not the policy
+        #     self.agent.clear_z()
+        #     # prior_paths, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
+        #     #                                              max_samples=self.max_path_length * 20,
+        #     #                                              accum_context=False,
+        #     #                                              resample=1)
+        #     prior_paths, n_steps, n_episodes = self.sampler.obtain_samples(
+        #         max_samples=self.max_path_length * 20,
+        #         max_trajs=np.inf, #4000步,不管多少条轨迹
+        #         random_steps=0)
+        #     logger.save_extra_data(prior_paths, path='eval_trajectories/prior-epoch{}'.format(epoch))
 
         ### train tasks
         # eval on a subset of train tasks for speed
-        indices = np.random.choice(self.train_tasks, len(self.eval_tasks))
+        indices = np.random.choice(self.train_tasks, len(self.eval_tasks))#从100个训练任务中随机选取30个任务进行评估(humanoid)
+        print('evaluating on {} train tasks'.format(len(indices)))
         eval_util.dprint('evaluating on {} train tasks'.format(len(indices)))
         ### eval train tasks with posterior sampled from the training replay buffer
         train_returns = []
@@ -536,23 +542,18 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.task_idx = idx
             self.env.reset_task(idx)
             paths = []
-            for _ in range(self.num_steps_per_eval // self.max_path_length):
-                context = self.sample_context(idx)
-                self.agent.infer_posterior(context)
-                p, _ = self.sampler.obtain_samples(deterministic=self.eval_deterministic,
-                                                   max_samples=self.max_path_length,
-                                                   accum_context=False,
-                                                   max_trajs=1,
-                                                   resample=np.inf)
-                paths += p
-
-            if self.sparse_rewards:
-                for p in paths:
-                    sparse_rewards = np.stack(e['sparse_reward'] for e in p['env_infos']).reshape(-1, 1)
-                    p['rewards'] = sparse_rewards
+            for _ in range(self.num_steps_per_eval // self.max_path_length):#采集3次,每条轨迹不超过200
+                context = self.prepare_context(idx)#exploration buffer抽出任务context
+                self.explorer.infer_posterior(context)#利用context算出对应任务分布,从中采样
+                self.agent.z = self.explorer.z#agent利用explorer的判断信息
+                path, step, traj = self.sampler.obtain_samples(max_samples=self.max_path_length,#agent开始采样
+                                                      max_trajs=1,
+                                                      random_steps=0)
+                paths += path
 
             train_returns.append(eval_util.get_average_returns(paths))
         train_returns = np.mean(train_returns)
+
         ### eval train tasks with on-policy data to match eval of test tasks
         train_final_returns, train_online_returns = self._do_eval(indices, epoch)
         eval_util.dprint('train online returns')
