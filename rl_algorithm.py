@@ -121,7 +121,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.exploration_replay_buffer = MultiTaskReplayBuffer(
             self.replay_buffer_size,
             env,
-            self.train_tasks,
+            self.train_tasks + self.eval_tasks,#meta test的时候要从eval task的buffer里面采集context,因此需要初始化额外空间
         )
         self.rl_replay_buffer = MultiTaskReplayBuffer(
                 self.replay_buffer_size,
@@ -464,7 +464,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     # def collect_paths(self, idx, epoch, run):
     def collect_paths(self, idx):
         #对meta-train tasks中的任务,模拟meta-test,进行评估
-        print("\nCollect paths for eval_task {}:".format(idx))
+
         self.task_idx = idx
         self.env.reset_task(idx)
         self.exploration_replay_buffer.task_buffers[idx].clear()#新任务的buffer是空的,因此这里模拟保持一致
@@ -500,6 +500,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         for idx in indices:#对所有任务:
             all_rets = []
             for r in range(self.num_evals):
+                print("\nCollect paths for eval_task {}:".format(r))
                 paths = self.collect_paths(idx)
                 all_rets.append([eval_util.get_average_returns([p]) for p in paths])
             final_returns.append(np.mean([a[-1] for a in all_rets]))
