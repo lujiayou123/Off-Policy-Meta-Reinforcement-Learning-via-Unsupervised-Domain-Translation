@@ -13,7 +13,7 @@ default_config = dict(
     ),
     algo_params=dict(
         meta_batch=16, # number of tasks to average the gradient across
-        num_iterations=500, # number of data sampling / training iterates
+        num_iterations=4000, # number of data sampling / training iterates, default 500
         num_initial_steps=2000, # number of transitions collected per task before training
         num_exploration_steps=200,#number of exploration steps(num_exploration_steps*num_task_inference)
         num_rl_training_steps=500,#number of rl training steps
@@ -24,7 +24,7 @@ default_config = dict(
         num_steps_prior=400, # number of transitions to collect per task with z ~ prior
         num_steps_posterior=0, # number of transitions to collect per task with z ~ posterior
         num_extra_rl_steps_posterior=400, # number of additional transitions to collect per task with z ~ posterior that are only used to train the policy and NOT the encoder
-        num_train_steps_per_itr=2000, # number of meta-gradient steps taken per iteration
+        num_train_steps_per_itr=500, # number of meta-gradient steps taken per iteration, default 2000
         num_evals=2, # number of independent evals
         num_steps_per_eval=600,  # number of transitions to eval on
         batch_size=256, # number of transitions in the RL batch

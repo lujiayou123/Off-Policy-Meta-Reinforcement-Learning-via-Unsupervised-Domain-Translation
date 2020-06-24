@@ -50,9 +50,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ea14ac27-3428-4617-886b-8bdd5ee4fcdf" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/2.py" beforeDir="false" afterPath="$PROJECT_DIR$/2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rl_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/rl_algorithm.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/ant-dir.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/ant-dir.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/ant-goal.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/ant-goal.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/default.py" beforeDir="false" afterPath="$PROJECT_DIR$/configs/default.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/humanoid-dir.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/humanoid-dir.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/configs/walker_rand_params.json" beforeDir="false" afterPath="$PROJECT_DIR$/configs/walker_rand_params.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -266,22 +270,22 @@
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
     <state x="659" y="143" width="668" height="817" key="#sacAgent/67.24.1853.1056@67.24.1853.1056" timestamp="1591337327389" />
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1592970073413">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom" timestamp="1592970206228">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1592970073413" />
-    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1592970073411">
+    <state width="1830" height="296" key="GridCell.Tab.0.bottom/67.24.1853.1056@67.24.1853.1056" timestamp="1592970206228" />
+    <state width="1830" height="296" key="GridCell.Tab.0.center" timestamp="1592970206226">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1592970073411" />
-    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1592970073409">
+    <state width="1830" height="296" key="GridCell.Tab.0.center/67.24.1853.1056@67.24.1853.1056" timestamp="1592970206226" />
+    <state width="1830" height="296" key="GridCell.Tab.0.left" timestamp="1592970206225">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1592970073409" />
-    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1592970073412">
+    <state width="1830" height="296" key="GridCell.Tab.0.left/67.24.1853.1056@67.24.1853.1056" timestamp="1592970206225" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right" timestamp="1592970206227">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
-    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1592970073412" />
+    <state width="1830" height="296" key="GridCell.Tab.0.right/67.24.1853.1056@67.24.1853.1056" timestamp="1592970206227" />
     <state width="1830" height="365" key="GridCell.Tab.1.bottom" timestamp="1592360316278">
       <screen x="67" y="24" width="1853" height="1056" />
     </state>
