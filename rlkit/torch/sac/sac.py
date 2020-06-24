@@ -402,13 +402,12 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
     def get_epoch_snapshot(self, epoch):
         # NOTE: overriding parent method which also optionally saves the env
         snapshot = OrderedDict(
-            # qf1=self.qf1.state_dict(),
-            # qf2=self.qf2.state_dict(),
             critic = self.critic.state_dict(),
             critic_target = self.critic_target.state_dict(),
             policy=self.agent.policy.state_dict(),
-            # vf=self.vf.state_dict(),
-            # target_vf=self.target_vf.state_dict(),
-            context_encoder=self.agent.context_encoder.state_dict(),
+            context_encoder=self.explorer.context_encoder.state_dict(),
+            explorer_critic = self.exploration_critic.state_dict(),
+            explorer_critic_target = self.exploration_critic_target.state_dict(),
+            explorer_policy = self.explorer.policy.state_dict()
         )
         return snapshot
