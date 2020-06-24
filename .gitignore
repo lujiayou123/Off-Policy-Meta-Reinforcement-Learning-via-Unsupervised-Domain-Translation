@@ -164,6 +164,7 @@ __pycache__
 /output/**
 
 .idea/**
+.idea/workspace.xml
 
 */__pycace__/**
 **.pyc

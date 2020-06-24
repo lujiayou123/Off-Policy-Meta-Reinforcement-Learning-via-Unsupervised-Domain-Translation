@@ -108,6 +108,10 @@ def experiment(variant):
     if ptu.gpu_enabled():
         algorithm.to(device=device)
 
+    # debugging triggers a lot of printing and logs to a debug directory
+    DEBUG = variant['util_params']['debug']
+    os.environ['DEBUG'] = str(int(DEBUG))
+
     # run the algorithm
     print("State Dim:", obs_dim)
     print("Action Dim:", action_dim)
