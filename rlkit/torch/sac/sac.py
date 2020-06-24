@@ -97,7 +97,7 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         self.exploration_policy_optimizer = Adam(self.explorer.policy.parameters(), lr=policy_lr)  # 都是高斯策略
 
         #for both
-        self.debug = True
+        self.debug = False
         self.original_plan = True
 
         # self.context_optimizer = optimizer_class(
