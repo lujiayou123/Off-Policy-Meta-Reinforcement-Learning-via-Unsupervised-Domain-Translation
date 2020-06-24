@@ -159,6 +159,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         '''
         params = self.get_epoch_snapshot(-1)
         logger.save_itr_params(-1, params)#像是保存参数到文件
+        # self._current_path_builder = PathBuilder()
         # at each iteration, we first collect data from tasks, perform meta-updates, then try to evaluate
         for iteration in range(self.num_iterations):
             print("\nIteration:{}".format(iteration+1))
