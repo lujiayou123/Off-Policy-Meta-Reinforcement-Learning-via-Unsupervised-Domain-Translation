@@ -461,36 +461,35 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         return data_to_save
 
     # def collect_paths(self, idx, epoch, run):
-    def collect_paths(self, idx):#收集数据进行评估
+    def collect_paths(self, idx):
+        #对meta-train tasks中的任务,模拟meta-test,进行评估
         self.task_idx = idx
         self.env.reset_task(idx)
-
+        self.exploration_replay_buffer.task_buffers[idx].clear()#新任务的buffer是空的,因此这里模拟保持一致
         self.explorer.clear_z()
+
+        self.collect_data(num_samples=self.embedding_batch_size,#确保sample embedding batch不会报错
+                          exploration=True,#采集并推后验
+                          random_steps=0)  # 直接用训练好的探索策略,不再需要随机了
+        for inference in range(self.num_task_inference):  # 跟训练时保持一致
+            print("\nMeta train Inference {} :".format(inference + 1))
+            self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)
+        self.agent.z = self.explorer.z
+
         paths = []
-        num_transitions = 0
+        num_steps = 0
         num_trajs = 0
-        while num_transitions < self.num_steps_per_eval:
-            path, step, traj = self.sampler.obtain_samples(max_samples=self.num_steps_per_eval - num_transitions,
+        while num_steps < self.num_steps_per_eval:
+            path, step, traj = self.sampler.obtain_samples(max_samples=self.num_steps_per_eval - num_steps,
                                                     max_trajs=1,
                                                     random_steps=0)
             paths += path
-            num_transitions += step
+            num_steps += step
             num_trajs += 1
-            if num_trajs >= self.num_exp_traj_eval:
-                self.agent.infer_posterior(self.agent.context)
-
-        # if self.sparse_rewards:
-        #     for p in paths:
-        #         sparse_rewards = np.stack(e['sparse_reward'] for e in p['env_infos']).reshape(-1, 1)
-        #         p['rewards'] = sparse_rewards
 
         goal = self.env._goal
         for path in paths:
             path['goal'] = goal  # goal
-
-        # save the paths for visualization, only useful for point mass
-        # if self.dump_eval_paths:
-        #     logger.save_extra_data(paths, path='eval_trajectories/task{}-epoch{}-run{}'.format(idx, epoch, run))
 
         return paths
 
@@ -543,9 +542,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.env.reset_task(idx)
             paths = []
             for _ in range(self.num_steps_per_eval // self.max_path_length):#采集3次,每条轨迹不超过200
+                '''one-shot'''
                 context = self.prepare_context(idx)#exploration buffer抽出任务context
                 self.explorer.infer_posterior(context)#利用context算出对应任务分布,从中采样
-                self.agent.z = self.explorer.z#agent利用explorer的判断信息
+                self.agent.z = self.explorer.z #agent利用explorer的判断信息
                 path, step, traj = self.sampler.obtain_samples(max_samples=self.max_path_length,#agent开始采样
                                                       max_trajs=1,
                                                       random_steps=0)
@@ -566,10 +566,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         eval_util.dprint(test_online_returns)
 
         # save the final posterior
-        self.agent.log_diagnostics(self.eval_statistics)
-
-        if hasattr(self.env, "log_diagnostics"):
-            self.env.log_diagnostics(paths, prefix=None)
+        # self.agent.log_diagnostics(self.eval_statistics)
+        #
+        # if hasattr(self.env, "log_diagnostics"):
+        #     self.env.log_diagnostics(paths, prefix=None)
 
         avg_train_return = np.mean(train_final_returns)
         avg_test_return = np.mean(test_final_returns)
