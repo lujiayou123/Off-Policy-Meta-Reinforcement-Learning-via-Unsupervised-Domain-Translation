@@ -112,6 +112,12 @@ def experiment(variant):
     DEBUG = variant['util_params']['debug']
     os.environ['DEBUG'] = str(int(DEBUG))
 
+    # create logging directory
+    # TODO support Docker
+    exp_id = 'debug' if DEBUG else None
+    experiment_log_dir = setup_logger(variant['env_name'], variant=variant, exp_id=exp_id,
+                                      base_log_dir=variant['util_params']['base_log_dir'])
+
     # run the algorithm
     print("State Dim:", obs_dim)
     print("Action Dim:", action_dim)

@@ -463,6 +463,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     # def collect_paths(self, idx, epoch, run):
     def collect_paths(self, idx):
         #对meta-train tasks中的任务,模拟meta-test,进行评估
+        print("\nCollect paths for eval_task {}:".format(idx))
         self.task_idx = idx
         self.env.reset_task(idx)
         self.exploration_replay_buffer.task_buffers[idx].clear()#新任务的buffer是空的,因此这里模拟保持一致
@@ -472,7 +473,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                           exploration=True,#采集并推后验
                           random_steps=0)  # 直接用训练好的探索策略,不再需要随机了
         for inference in range(self.num_task_inference):  # 跟训练时保持一致
-            print("\nMeta train Inference {} :".format(inference + 1))
             self.collect_data(num_samples=self.num_exploration_steps, exploration=True, random_steps=0)
         self.agent.z = self.explorer.z
 
@@ -533,7 +533,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         ### train tasks
         # eval on a subset of train tasks for speed
         indices = np.random.choice(self.train_tasks, len(self.eval_tasks))#从100个训练任务中随机选取30个任务进行评估(humanoid)
-        print('evaluating on {} train tasks'.format(len(indices)))
+        print('\nEvaluating on {} train tasks'.format(len(indices)))
         eval_util.dprint('evaluating on {} train tasks'.format(len(indices)))
         ### eval train tasks with posterior sampled from the training replay buffer
         train_returns = []
@@ -553,15 +553,19 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             train_returns.append(eval_util.get_average_returns(paths))
         train_returns = np.mean(train_returns)
+        print("\nTrain returns:{}".format(train_returns))
 
         ### eval train tasks with on-policy data to match eval of test tasks
         train_final_returns, train_online_returns = self._do_eval(indices, epoch)
+        print('\nTrain online returns :{}'.format(len(train_online_returns)))
         eval_util.dprint('train online returns')
         eval_util.dprint(train_online_returns)
 
         ### test tasks
+        print('\nEvaluating on {} test tasks'.format(len(self.eval_tasks)))
         eval_util.dprint('evaluating on {} test tasks'.format(len(self.eval_tasks)))
         test_final_returns, test_online_returns = self._do_eval(self.eval_tasks, epoch)
+        print('\nTrain online returns :{}'.format(len(train_online_returns)))
         eval_util.dprint('test online returns')
         eval_util.dprint(test_online_returns)
 
@@ -578,8 +582,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.eval_statistics['AverageTrainReturn_all_train_tasks'] = train_returns
         self.eval_statistics['AverageReturn_all_train_tasks'] = avg_train_return
         self.eval_statistics['AverageReturn_all_test_tasks'] = avg_test_return
-        logger.save_extra_data(avg_train_online_return, path='online-train-epoch{}'.format(epoch))
-        logger.save_extra_data(avg_test_online_return, path='online-test-epoch{}'.format(epoch))
+        # logger.save_extra_data(avg_train_online_return, path='online-train-epoch{}'.format(epoch))
+        # logger.save_extra_data(avg_test_online_return, path='online-test-epoch{}'.format(epoch))
 
         for key, value in self.eval_statistics.items():
             logger.record_tabular(key, value)
