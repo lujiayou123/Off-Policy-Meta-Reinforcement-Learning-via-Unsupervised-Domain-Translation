@@ -248,7 +248,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 # self.explorer.update_parameters(memory=self.exploration_replay_buffer,batch_size=self.batch_size)
                 #更新RL agent参数
                 indices = np.random.choice(self.train_tasks, self.meta_batch)#train_tasks中随机取meta_batch个task , sample RL batch b~B
-                if ((train_step + 1) % 500 == 0):
+                if ((train_step + 1) % 100 == 0):
                     print("\nTraining step {}".format(train_step + 1))
                     print("Task indices: {}".format(indices))
                     # print("alpha:{}".format(self.alpha))
