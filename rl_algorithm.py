@@ -39,7 +39,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             embedding_mini_batch_size=1024,
             max_path_length=200,
             discount=0.99,
-            replay_buffer_size=1000000,
+            replay_buffer_size=2000000,
             reward_scale=1,
             num_exp_traj_eval=1,
             update_post_train=1,
@@ -256,7 +256,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self._n_train_steps_total += 1
 
             # eval
-            self._try_to_eval(iteration)#训练完了，评估模型
+            if (iteration + 1) % 8 == 0:#每4000记录一次,而不是500
+                self._try_to_eval(iteration)#训练完了，评估模型
 
     def pretrain(self):
         """
