@@ -24,7 +24,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             num_train_steps_per_itr=1000,
             num_initial_steps=100,
             num_exploration_steps=200,
-            num_rl_training_steps=400,
+            num_rl_training_steps=500,
             num_random_steps=50,
             num_exploration_episodes=3,
             num_task_inference=5,
@@ -256,8 +256,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self._n_train_steps_total += 1
 
             # eval
-            if (iteration + 1) % 8 == 0:#每4000记录一次,而不是500
-                self._try_to_eval(iteration)#训练完了，评估模型
+            # if (iteration + 1) % 8 == 0:#每4000记录一次,而不是500
+            #     self._try_to_eval(iteration)#训练完了，评估模型
+            self._try_to_eval(iteration)
 
     def pretrain(self):
         """
