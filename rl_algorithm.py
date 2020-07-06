@@ -305,6 +305,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     print("sample context,update posterior,then sample z from it")
                     print("old z:", self.explorer.z)
                 self.explorer.infer_posterior(context)
+
+                '''
+                如果explorer推完后验就删数据,
+                那么explorer的agent用什么数据进行训练呢?
+                self.exploration_replay_buffer.task_buffers[self.task_idx].clear()
+                '''
+
+
+
                 if self.debug:
                     print("new z:", self.explorer.z)
 
@@ -469,7 +478,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
         self.task_idx = idx
         self.env.reset_task(idx)
-        self.exploration_replay_buffer.task_buffers[idx].clear()#新任务的buffer是空的,因此这里模拟保持一致
+        ###necessary?
+        # self.exploration_replay_buffer.task_buffers[idx].clear()#新任务的buffer是空的,因此这里模拟保持一致
+        ###
         self.explorer.clear_z()
 
         self.collect_data(num_samples=self.embedding_batch_size,#确保sample embedding batch不会报错

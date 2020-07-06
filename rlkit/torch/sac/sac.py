@@ -186,6 +186,8 @@ class PEARLSoftActorCritic(MetaRLAlgorithm):
         #sample data from exploration buffer for explorer training
         obs, actions, rewards, next_obs, terms = self.sample_data(indices=indices, explorer=True)#从Replay Buffer采集数据，s,a,r,s',d
 
+        print("rewards shape:{}".format(rewards.shape))
+
         # run inference in networks
         if self.original_plan:
             #context作为输入encoder前向传播得到分布的均值方差,从中采样的z和obs concat作为policy的输入前向传播得到policy_outputs
